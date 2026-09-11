@@ -90,10 +90,24 @@
         form {
             margin: 0;
         }
+
+        nav {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 14px;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
     <div class="card">
+        <nav>
+            <a href="{% url 'tarefa_list' %}">Tarefas</a>
+            <a href="{% url 'responsavel_list' %}">Responsáveis</a>
+        </nav>
         {% block content %}{% endblock %}
     </div>
 </body>

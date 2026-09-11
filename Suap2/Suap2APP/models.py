@@ -7,6 +7,7 @@ class Tarefa(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, null=False, blank=False)
     deadline = models.DateTimeField(null=False, blank=False)
     finished_at = models.DateTimeField(null=True, blank=True)
+    pessoa_responsavel = models.ForeignKey('Responsavel', on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
         verbose_name = 'Tarefa'

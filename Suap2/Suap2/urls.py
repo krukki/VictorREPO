@@ -15,4 +15,8 @@ urlpatterns = [
     path('tarefas/<int:pk>/editar/', views.tarefa_update, name='tarefa_update'),
     path('tarefas/<int:pk>/excluir/', views.tarefa_delete, name='tarefa_delete'),
     path('tarefas/<int:pk>/concluir/', views.tarefa_toggle, name='tarefa_toggle'),
+    path('responsaveis/', views.responsavel_list, name='responsavel_list'),
+    path('responsaveis/novo/', views.responsavel_create, name='responsavel_create'),
+    path('responsaveis/<int:pk>/editar/', views.responsavel_update, name='responsavel_update'),
+    path('responsaveis/<int:pk>/excluir/', views.responsavel_delete, name='responsavel_delete'),
 ]

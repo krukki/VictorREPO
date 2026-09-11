@@ -5,10 +5,11 @@ from .models import Tarefa, Responsavel
 class TarefaForm(forms.ModelForm):
     class Meta:
         model = Tarefa
-        fields = ['title', 'deadline']
+        fields = ['title', 'deadline', 'pessoa_responsavel']
         labels = {
             'title': 'Título',
             'deadline': 'Prazo',
+            'pessoa_responsavel': 'Responsável',
         }
         widgets = {
             'title': forms.TextInput(attrs={'placeholder': 'O que precisa ser feito?'}),

@@ -24,6 +24,7 @@
                             {% else %}
                                 Prazo: {{ tarefa.deadline|date:"d/m/Y H:i" }}
                             {% endif %}
+                            · Responsável: {{ tarefa.pessoa_responsavel.nome }}
                         </div>
                     </div>
                     <div style="display: flex; gap: 6px; flex-shrink: 0;">

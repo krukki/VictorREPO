@@ -14,3 +14,17 @@ class Tarefa(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Responsavel(models.Model):
+    nome = models.CharField(max_length=150, null=False, blank=False)
+    cpf = models.CharField(max_length=14, unique=True, null=False, blank=False)
+    email = models.EmailField(null=True, blank=True)
+    telefone = models.CharField(max_length=20, null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Responsável'
+        verbose_name_plural = 'Responsáveis'
+
+    def __str__(self):
+        return self.nome

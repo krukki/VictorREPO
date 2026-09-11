@@ -6,7 +6,7 @@ from .forms import TarefaForm, ResponsavelForm
 
 
 def tarefa_list(request):
-    tarefas = Tarefa.objects.order_by('finished_at', 'deadline')
+    tarefas = Tarefa.objects.all()
     return render(request, 'Suap2APP/tarefa_list.html', {
         'tarefas': tarefas,
         'now': timezone.now(),

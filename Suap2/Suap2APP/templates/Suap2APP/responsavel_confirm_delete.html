@@ -4,6 +4,7 @@
 
 {% block content %}
     <h1>Excluir responsável</h1>
+
     {% if total_tarefas %}
         <p>
             Não é possível excluir <strong>{{ responsavel.nome }}</strong>: ainda há
@@ -11,13 +12,13 @@
             Reatribua ou exclua essas tarefas primeiro.
         </p>
 
-        <div style="display: flex; gap: 8px; margin-top: 16px;">
+        <div class="botoes">
             <a class="btn btn-secondary" href="{% url 'responsavel_list' %}">Voltar</a>
         </div>
     {% else %}
         <p>Tem certeza que deseja excluir o responsável <strong>{{ responsavel.nome }}</strong>? Essa ação não pode ser desfeita.</p>
 
-        <form method="post" style="display: flex; gap: 8px; margin-top: 16px;">
+        <form method="post" class="botoes">
             {% csrf_token %}
             <button type="submit" class="btn btn-danger">Excluir</button>
             <a class="btn btn-secondary" href="{% url 'responsavel_list' %}">Cancelar</a>

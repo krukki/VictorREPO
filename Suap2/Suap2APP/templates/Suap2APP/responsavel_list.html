@@ -3,24 +3,24 @@
 {% block title %}Responsáveis — Suap2{% endblock %}
 
 {% block content %}
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-        <h1 style="margin: 0;">Responsáveis</h1>
+    <div class="cabecalho">
+        <h1>Responsáveis</h1>
         <a class="btn btn-primary" href="{% url 'responsavel_create' %}">+ Novo responsável</a>
     </div>
 
     {% if responsaveis %}
-        <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="lista">
             {% for responsavel in responsaveis %}
-                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1px solid #e9ecef; border-radius: 8px;">
-                    <div style="min-width: 0;">
-                        <div style="font-weight: 600;">{{ responsavel.nome }}</div>
-                        <div style="font-size: 13px; color: #868e96;">
+                <div class="item">
+                    <div class="item-info">
+                        <div class="item-titulo">{{ responsavel.nome }}</div>
+                        <div class="item-detalhe">
                             CPF: {{ responsavel.cpf }}
                             {% if responsavel.email %} · {{ responsavel.email }}{% endif %}
                             {% if responsavel.telefone %} · {{ responsavel.telefone }}{% endif %}
                         </div>
                     </div>
-                    <div style="display: flex; gap: 6px; flex-shrink: 0;">
+                    <div class="acoes">
                         <a class="btn btn-secondary btn-small" href="{% url 'responsavel_update' responsavel.pk %}">Editar</a>
                         <a class="btn btn-danger btn-small" href="{% url 'responsavel_delete' responsavel.pk %}">Excluir</a>
                     </div>
@@ -28,6 +28,6 @@
             {% endfor %}
         </div>
     {% else %}
-        <p style="color: #868e96;">Nenhum responsável cadastrado ainda.</p>
+        <p class="vazio">Nenhum responsável cadastrado ainda.</p>
     {% endif %}
 {% endblock %}

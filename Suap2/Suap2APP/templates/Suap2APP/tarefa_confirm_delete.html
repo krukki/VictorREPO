@@ -6,7 +6,7 @@
     <h1>Excluir tarefa</h1>
     <p>Tem certeza que deseja excluir a tarefa <strong>{{ tarefa.titulo }}</strong>? Essa ação não pode ser desfeita.</p>
 
-    <form method="post" style="display: flex; gap: 8px; margin-top: 16px;">
+    <form method="post" class="botoes">
         {% csrf_token %}
         <button type="submit" class="btn btn-danger">Excluir</button>
         <a class="btn btn-secondary" href="{% url 'tarefa_list' %}">Cancelar</a>

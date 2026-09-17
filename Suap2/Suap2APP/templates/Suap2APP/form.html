@@ -1,0 +1,37 @@
+{% extends 'Suap2APP/base.html' %}
+
+{% block title %}{{ titulo_pagina }} — Suap2{% endblock %}
+
+{% block content %}
+    <h1>{{ titulo_pagina }}</h1>
+
+    <form method="post" class="formulario">
+        {% csrf_token %}
+
+        {% if sem_responsaveis %}
+            <p class="aviso">
+                Nenhum responsável cadastrado ainda.
+                <a href="{% url 'responsavel_create' %}">Cadastre um responsável</a> antes de criar tarefas.
+            </p>
+        {% endif %}
+
+        {% for error in form.non_field_errors %}
+            <div class="erro">{{ error }}</div>
+        {% endfor %}
+
+        {% for field in form %}
+            <div>
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% for error in field.errors %}
+                    <div class="erro">{{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+
+        <div class="botoes">
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <a class="btn btn-secondary" href="{{ cancelar_url }}">Cancelar</a>
+        </div>
+    </form>
+{% endblock %}

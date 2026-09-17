@@ -1,107 +1,122 @@
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import ProtectedError
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404
+from django.urls import reverse_lazy
 from django.utils import timezone
+from django.views.decorators.http import require_POST
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 
 from .models import Tarefa, Responsavel
 from .forms import TarefaForm, ResponsavelForm
 
 
-def tarefa_list(request):
-    tarefas = Tarefa.objects.select_related('pessoa_responsavel')
-    return render(request, 'Suap2APP/tarefa_list.html', {
-        'tarefas': tarefas,
-        'now': timezone.now(),
-    })
+class FormularioMixin(LoginRequiredMixin, SuccessMessageMixin):
+    """Configuração comum das telas de criar/editar, que usam o mesmo template."""
+    template_name = 'Suap2APP/form.html'
+    titulo_pagina = ''
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo_pagina'] = self.titulo_pagina
+        context['cancelar_url'] = self.success_url
+        return context
 
 
-def tarefa_create(request):
-    if request.method == 'POST':
-        form = TarefaForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('tarefa_list')
-    else:
-        form = TarefaForm()
-    return render(request, 'Suap2APP/tarefa_form.html', {
-        'form': form,
-        'titulo_pagina': 'Nova tarefa',
-    })
+# Tarefas
+
+class TarefaListView(LoginRequiredMixin, ListView):
+    model = Tarefa
+    context_object_name = 'tarefas'
+
+    def get_queryset(self):
+        return Tarefa.objects.select_related('pessoa_responsavel')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['now'] = timezone.now()
+        return context
 
 
-def tarefa_update(request, pk):
-    tarefa = get_object_or_404(Tarefa, pk=pk)
-    if request.method == 'POST':
-        form = TarefaForm(request.POST, instance=tarefa)
-        if form.is_valid():
-            form.save()
-            return redirect('tarefa_list')
-    else:
-        form = TarefaForm(instance=tarefa)
-    return render(request, 'Suap2APP/tarefa_form.html', {
-        'form': form,
-        'titulo_pagina': 'Editar tarefa',
-    })
+class TarefaFormularioMixin(FormularioMixin):
+    model = Tarefa
+    form_class = TarefaForm
+    success_url = reverse_lazy('tarefa_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['sem_responsaveis'] = not Responsavel.objects.exists()
+        return context
 
 
-def tarefa_delete(request, pk):
-    tarefa = get_object_or_404(Tarefa, pk=pk)
-    if request.method == 'POST':
-        tarefa.delete()
-        return redirect('tarefa_list')
-    return render(request, 'Suap2APP/tarefa_confirm_delete.html', {'tarefa': tarefa})
+class TarefaCreateView(TarefaFormularioMixin, CreateView):
+    titulo_pagina = 'Nova tarefa'
+    success_message = 'Tarefa "%(titulo)s" criada.'
 
 
+class TarefaUpdateView(TarefaFormularioMixin, UpdateView):
+    titulo_pagina = 'Editar tarefa'
+    success_message = 'Tarefa "%(titulo)s" atualizada.'
+
+
+class TarefaDeleteView(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
+    model = Tarefa
+    success_url = reverse_lazy('tarefa_list')
+
+    def get_success_message(self, cleaned_data):
+        return f'Tarefa "{self.object.titulo}" excluída.'
+
+
+@login_required
+@require_POST
 def tarefa_toggle(request, pk):
     tarefa = get_object_or_404(Tarefa, pk=pk)
-    if request.method == 'POST':
-        tarefa.concluida_em = None if tarefa.concluida_em else timezone.now()
-        tarefa.save()
+    tarefa.concluida_em = None if tarefa.concluida_em else timezone.now()
+    tarefa.save(update_fields=['concluida_em'])
+    estado = 'concluída' if tarefa.concluida_em else 'reaberta'
+    messages.success(request, f'Tarefa "{tarefa.titulo}" {estado}.')
     return redirect('tarefa_list')
 
 
-def responsavel_list(request):
-    responsaveis = Responsavel.objects.order_by('nome')
-    return render(request, 'Suap2APP/responsavel_list.html', {'responsaveis': responsaveis})
+# Responsáveis
+
+class ResponsavelListView(LoginRequiredMixin, ListView):
+    model = Responsavel
+    context_object_name = 'responsaveis'
 
 
-def responsavel_create(request):
-    if request.method == 'POST':
-        form = ResponsavelForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('responsavel_list')
-    else:
-        form = ResponsavelForm()
-    return render(request, 'Suap2APP/responsavel_form.html', {
-        'form': form,
-        'titulo_pagina': 'Novo responsável',
-    })
+class ResponsavelFormularioMixin(FormularioMixin):
+    model = Responsavel
+    form_class = ResponsavelForm
+    success_url = reverse_lazy('responsavel_list')
 
 
-def responsavel_update(request, pk):
-    responsavel = get_object_or_404(Responsavel, pk=pk)
-    if request.method == 'POST':
-        form = ResponsavelForm(request.POST, instance=responsavel)
-        if form.is_valid():
-            form.save()
-            return redirect('responsavel_list')
-    else:
-        form = ResponsavelForm(instance=responsavel)
-    return render(request, 'Suap2APP/responsavel_form.html', {
-        'form': form,
-        'titulo_pagina': 'Editar responsável',
-    })
+class ResponsavelCreateView(ResponsavelFormularioMixin, CreateView):
+    titulo_pagina = 'Novo responsável'
+    success_message = 'Responsável "%(nome)s" cadastrado.'
 
 
-def responsavel_delete(request, pk):
-    responsavel = get_object_or_404(Responsavel, pk=pk)
-    if request.method == 'POST':
+class ResponsavelUpdateView(ResponsavelFormularioMixin, UpdateView):
+    titulo_pagina = 'Editar responsável'
+    success_message = 'Responsável "%(nome)s" atualizado.'
+
+
+class ResponsavelDeleteView(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
+    model = Responsavel
+    success_url = reverse_lazy('responsavel_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['total_tarefas'] = self.object.tarefa_set.count()
+        return context
+
+    def get_success_message(self, cleaned_data):
+        return f'Responsável "{self.object.nome}" excluído.'
+
+    def form_valid(self, form):
         try:
-            responsavel.delete()
-            return redirect('responsavel_list')
+            return super().form_valid(form)
         except ProtectedError:
-            pass
-    return render(request, 'Suap2APP/responsavel_confirm_delete.html', {
-        'responsavel': responsavel,
-        'total_tarefas': responsavel.tarefa_set.count(),
-    })
+            return self.render_to_response(self.get_context_data(form=form))

@@ -3,31 +3,31 @@
 {% block title %}Tarefas — Suap2{% endblock %}
 
 {% block content %}
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-        <h1 style="margin: 0;">Minhas tarefas</h1>
+    <div class="cabecalho">
+        <h1>Minhas tarefas</h1>
         <a class="btn btn-primary" href="{% url 'tarefa_create' %}">+ Nova tarefa</a>
     </div>
 
     {% if tarefas %}
-        <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="lista">
             {% for tarefa in tarefas %}
-                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1px solid #e9ecef; border-radius: 8px;">
-                    <div style="min-width: 0;">
-                        <div style="font-weight: 600; {% if tarefa.concluida_em %}text-decoration: line-through; color: #868e96;{% endif %}">
+                <div class="item">
+                    <div class="item-info">
+                        <div class="item-titulo{% if tarefa.concluida_em %} concluida{% endif %}">
                             {{ tarefa.titulo }}
                         </div>
-                        <div style="font-size: 13px; color: #868e96;">
+                        <div class="item-detalhe">
                             {% if tarefa.concluida_em %}
                                 Concluída em {{ tarefa.concluida_em|date:"d/m/Y H:i" }}
                             {% elif tarefa.prazo < now %}
-                                <span style="color: #c92a2a;">Atrasada — prazo era {{ tarefa.prazo|date:"d/m/Y H:i" }}</span>
+                                <span class="atrasada">Atrasada — prazo era {{ tarefa.prazo|date:"d/m/Y H:i" }}</span>
                             {% else %}
                                 Prazo: {{ tarefa.prazo|date:"d/m/Y H:i" }}
                             {% endif %}
                             · Responsável: {{ tarefa.pessoa_responsavel.nome }}
                         </div>
                     </div>
-                    <div style="display: flex; gap: 6px; flex-shrink: 0;">
+                    <div class="acoes">
                         <form method="post" action="{% url 'tarefa_toggle' tarefa.pk %}">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-secondary btn-small">
@@ -41,6 +41,6 @@
             {% endfor %}
         </div>
     {% else %}
-        <p style="color: #868e96;">Nenhuma tarefa cadastrada ainda.</p>
+        <p class="vazio">Nenhuma tarefa cadastrada ainda.</p>
     {% endif %}
 {% endblock %}

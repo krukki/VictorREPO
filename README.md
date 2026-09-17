@@ -7,14 +7,35 @@ Gerenciador de tarefas em Django: cadastro de tarefas e de responsáveis.
 ```bash
 python -m venv venv
 venv\Scripts\activate        # Linux/macOS: source venv/bin/activate
-pip install "Django>=6.1,<6.2"
+pip install -r requirements.txt
 cd Suap2
 python manage.py migrate
-python manage.py createsuperuser   # opcional, para acessar /admin
+python manage.py createsuperuser   # usuário para entrar no sistema e no /admin
 python manage.py runserver
 ```
 
-Acesse http://127.0.0.1:8000/.
+Acesse http://127.0.0.1:8000/ e entre com o usuário criado. Todas as páginas exigem login.
+
+## Testes
+
+```bash
+cd Suap2
+python manage.py test Suap2APP
+```
+
+## Configuração por variáveis de ambiente
+
+| Variável               | Padrão (desenvolvimento)     | Em produção                          |
+|------------------------|------------------------------|--------------------------------------|
+| `DJANGO_SECRET_KEY`    | chave insegura fixa          | uma chave longa e aleatória          |
+| `DJANGO_DEBUG`         | `1`                          | `0`                                  |
+| `DJANGO_ALLOWED_HOSTS` | vazio                        | domínios separados por vírgula       |
+
+Gere uma chave com:
+
+```bash
+python -c "from django.core.management.utils import get_random_secret_key as k; print(k())"
+```
 
 ## Atenção: migrações foram unificadas
 

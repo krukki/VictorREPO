@@ -1,3 +1,4 @@
+from django.db.models import ProtectedError
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 
@@ -6,7 +7,7 @@ from .forms import TarefaForm, ResponsavelForm
 
 
 def tarefa_list(request):
-    tarefas = Tarefa.objects.all()
+    tarefas = Tarefa.objects.select_related('pessoa_responsavel')
     return render(request, 'Suap2APP/tarefa_list.html', {
         'tarefas': tarefas,
         'now': timezone.now(),
@@ -95,6 +96,12 @@ def responsavel_update(request, pk):
 def responsavel_delete(request, pk):
     responsavel = get_object_or_404(Responsavel, pk=pk)
     if request.method == 'POST':
-        responsavel.delete()
-        return redirect('responsavel_list')
-    return render(request, 'Suap2APP/responsavel_confirm_delete.html', {'responsavel': responsavel})
+        try:
+            responsavel.delete()
+            return redirect('responsavel_list')
+        except ProtectedError:
+            pass
+    return render(request, 'Suap2APP/responsavel_confirm_delete.html', {
+        'responsavel': responsavel,
+        'total_tarefas': responsavel.tarefa_set.count(),
+    })

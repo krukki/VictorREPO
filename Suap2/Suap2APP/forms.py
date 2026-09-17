@@ -40,3 +40,14 @@ class ResponsavelForm(forms.ModelForm):
             'email': forms.EmailInput(attrs={'placeholder': 'nome@exemplo.com'}),
             'telefone': forms.TextInput(attrs={'placeholder': '(00) 00000-0000'}),
         }
+
+    def clean_cpf(self):
+        digitos = ''.join(c for c in self.cleaned_data['cpf'] if c.isdigit())
+        if len(digitos) != 11 or digitos == digitos[0] * 11:
+            raise forms.ValidationError('CPF inválido.')
+        for tamanho in (9, 10):
+            soma = sum(int(d) * peso for d, peso in zip(digitos, range(tamanho + 1, 1, -1)))
+            if (soma * 10 % 11) % 10 != int(digitos[tamanho]):
+                raise forms.ValidationError('CPF inválido.')
+        # Guarda sempre no mesmo formato para que o unique=True pegue duplicatas
+        return f'{digitos[:3]}.{digitos[3:6]}.{digitos[6:9]}-{digitos[9:]}'

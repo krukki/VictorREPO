@@ -10,6 +10,7 @@ class Responsavel(models.Model):
     class Meta:
         verbose_name = 'Responsável'
         verbose_name_plural = 'Responsáveis'
+        ordering = ['nome']
 
     def __str__(self):
         return self.nome
@@ -20,11 +21,12 @@ class Tarefa(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, null=False, blank=False)
     deadline = models.DateTimeField(null=False, blank=False)
     finished_at = models.DateTimeField(null=True, blank=True)
-    pessoa_responsavel = models.ForeignKey(Responsavel, on_delete=models.CASCADE)
+    pessoa_responsavel = models.ForeignKey(Responsavel, on_delete=models.PROTECT)
 
     class Meta:
         verbose_name = 'Tarefa'
         verbose_name_plural = 'Tarefas'
+        ordering = [models.F('finished_at').asc(nulls_first=True), 'deadline']
 
     def __str__(self):
         return self.title

@@ -1,0 +1,26 @@
+{% extends 'Suap2APP/base.html' %}
+
+{% block title %}Excluir responsável — Suap2{% endblock %}
+
+{% block content %}
+    <h1>Excluir responsável</h1>
+    {% if total_tarefas %}
+        <p>
+            Não é possível excluir <strong>{{ responsavel.nome }}</strong>: ainda há
+            {{ total_tarefas }} tarefa{{ total_tarefas|pluralize }} atribuída{{ total_tarefas|pluralize }} a essa pessoa.
+            Reatribua ou exclua essas tarefas primeiro.
+        </p>
+
+        <div style="display: flex; gap: 8px; margin-top: 16px;">
+            <a class="btn btn-secondary" href="{% url 'responsavel_list' %}">Voltar</a>
+        </div>
+    {% else %}
+        <p>Tem certeza que deseja excluir o responsável <strong>{{ responsavel.nome }}</strong>? Essa ação não pode ser desfeita.</p>
+
+        <form method="post" style="display: flex; gap: 8px; margin-top: 16px;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Excluir</button>
+            <a class="btn btn-secondary" href="{% url 'responsavel_list' %}">Cancelar</a>
+        </form>
+    {% endif %}
+{% endblock %}

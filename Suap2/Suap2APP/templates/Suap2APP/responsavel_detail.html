@@ -1,0 +1,41 @@
+{% extends 'Suap2APP/base.html' %}
+
+{% block title %}{{ responsavel.nome }} — Suap2{% endblock %}
+
+{% block content %}
+    <div class="cabecalho">
+        <div>
+            <h1>{{ responsavel.nome }}</h1>
+            <div class="item-detalhe">
+                CPF: {{ responsavel.cpf }}
+                {% if responsavel.email %} · {{ responsavel.email }}{% endif %}
+                {% if responsavel.telefone %} · {{ responsavel.telefone }}{% endif %}
+            </div>
+        </div>
+        <a class="btn btn-secondary" href="{% url 'responsavel_update' responsavel.pk %}">Editar</a>
+    </div>
+
+    <div class="contadores">
+        <a class="contador" href="{% url 'tarefa_list' %}?responsavel={{ responsavel.pk }}&amp;status=pendentes">
+            <strong>{{ pendentes }}</strong> pendente{{ pendentes|pluralize }}
+        </a>
+        <a class="contador{% if atrasadas %} contador-alerta{% endif %}" href="{% url 'tarefa_list' %}?responsavel={{ responsavel.pk }}&amp;status=atrasadas">
+            <strong>{{ atrasadas }}</strong> atrasada{{ atrasadas|pluralize }}
+        </a>
+        <a class="contador" href="{% url 'tarefa_list' %}?responsavel={{ responsavel.pk }}&amp;status=concluidas">
+            <strong>{{ concluidas }}</strong> concluída{{ concluidas|pluralize }}
+        </a>
+    </div>
+
+    <h2>Tarefas</h2>
+
+    {% if tarefas %}
+        <div class="lista">
+            {% for tarefa in tarefas %}
+                {% include 'Suap2APP/_tarefa_item.html' %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="vazio">Nenhuma tarefa atribuída a {{ responsavel.nome }}.</p>
+    {% endif %}
+{% endblock %}

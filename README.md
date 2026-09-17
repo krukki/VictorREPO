@@ -37,6 +37,38 @@ Gere uma chave com:
 python -c "from django.core.management.utils import get_random_secret_key as k; print(k())"
 ```
 
+## Lembretes por e-mail
+
+O comando `enviar_lembretes` manda um e-mail para cada responsável (que tenha e-mail
+cadastrado) listando as tarefas pendentes que vencem nas próximas 24 horas. Cada tarefa
+recebe no máximo um lembrete; se o prazo for alterado, ela pode receber outro.
+
+```bash
+python manage.py enviar_lembretes              # prazo nas próximas 24h
+python manage.py enviar_lembretes --horas 48   # outra janela
+python manage.py enviar_lembretes --dry-run    # só mostra quem receberia
+```
+
+Sem configuração, os e-mails aparecem apenas no terminal. Para enviar de verdade,
+defina as variáveis (exemplo com Gmail, que exige uma "senha de app"):
+
+| Variável                     | Exemplo                                        |
+|------------------------------|------------------------------------------------|
+| `DJANGO_EMAIL_BACKEND`       | `django.core.mail.backends.smtp.EmailBackend`  |
+| `DJANGO_EMAIL_HOST`          | `smtp.gmail.com`                               |
+| `DJANGO_EMAIL_PORT`          | `587`                                          |
+| `DJANGO_EMAIL_HOST_USER`     | `voce@gmail.com`                               |
+| `DJANGO_EMAIL_HOST_PASSWORD` | senha de app                                   |
+| `DJANGO_DEFAULT_FROM_EMAIL`  | `Suap2 <voce@gmail.com>`                       |
+
+Para rodar automaticamente a cada hora no Windows (Agendador de Tarefas):
+
+```powershell
+schtasks /Create /SC HOURLY /TN "Suap2 lembretes" /TR "py -3.14 C:\caminho\para\VictorREPO\Suap2\manage.py enviar_lembretes"
+```
+
+No Linux, use o cron: `0 * * * * cd /caminho/Suap2 && python manage.py enviar_lembretes`.
+
 ## Atenção: migrações foram unificadas
 
 As migrações antigas (0001–0005) foram juntadas em uma única `0001_initial`.

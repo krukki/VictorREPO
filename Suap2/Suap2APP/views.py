@@ -2,15 +2,16 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.db.models import ProtectedError
+from django.db.models import Count, ProtectedError, Q
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 
 from .models import Tarefa, Responsavel
-from .forms import TarefaForm, ResponsavelForm
+from .forms import TarefaForm, TarefaFiltroForm, ResponsavelForm
 
 
 class FormularioMixin(LoginRequiredMixin, SuccessMessageMixin):
@@ -25,18 +26,23 @@ class FormularioMixin(LoginRequiredMixin, SuccessMessageMixin):
         return context
 
 
-# Tarefas
+# tarefas ksadkadkaskadakdakdakd
 
 class TarefaListView(LoginRequiredMixin, ListView):
     model = Tarefa
     context_object_name = 'tarefas'
+    paginate_by = 10
 
     def get_queryset(self):
-        return Tarefa.objects.select_related('pessoa_responsavel')
+        self.agora = timezone.now()
+        self.filtro = TarefaFiltroForm(self.request.GET)
+        return self.filtro.filtrar(Tarefa.objects.select_related('pessoa_responsavel'), self.agora)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['now'] = timezone.now()
+        context['now'] = self.agora
+        context['filtro'] = self.filtro
+        context['filtrando'] = any(self.request.GET.get(campo) for campo in self.filtro.fields)
         return context
 
 
@@ -77,6 +83,10 @@ def tarefa_toggle(request, pk):
     tarefa.save(update_fields=['concluida_em'])
     estado = 'concluída' if tarefa.concluida_em else 'reaberta'
     messages.success(request, f'Tarefa "{tarefa.titulo}" {estado}.')
+    # Volta para a página de onde veio (com filtros), se for um endereço deste site
+    proxima = request.POST.get('next')
+    if proxima and url_has_allowed_host_and_scheme(proxima, allowed_hosts={request.get_host()}):
+        return redirect(proxima)
     return redirect('tarefa_list')
 
 
@@ -85,6 +95,24 @@ def tarefa_toggle(request, pk):
 class ResponsavelListView(LoginRequiredMixin, ListView):
     model = Responsavel
     context_object_name = 'responsaveis'
+
+
+class ResponsavelDetailView(LoginRequiredMixin, DetailView):
+    model = Responsavel
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        agora = timezone.now()
+        tarefas = self.object.tarefa_set.select_related('pessoa_responsavel')
+        pendente = Q(concluida_em__isnull=True)
+        context.update(tarefas.aggregate(
+            pendentes=Count('pk', filter=pendente),
+            atrasadas=Count('pk', filter=pendente & Q(prazo__lt=agora)),
+            concluidas=Count('pk', filter=Q(concluida_em__isnull=False)),
+        ))
+        context['tarefas'] = tarefas
+        context['now'] = agora
+        return context
 
 
 class ResponsavelFormularioMixin(FormularioMixin):

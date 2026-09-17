@@ -21,6 +21,7 @@ class Tarefa(models.Model):
     criada_em = models.DateTimeField(auto_now_add=True)
     prazo = models.DateTimeField()
     concluida_em = models.DateTimeField(null=True, blank=True)
+    lembrete_enviado_em = models.DateTimeField(null=True, blank=True, editable=False)
     pessoa_responsavel = models.ForeignKey(Responsavel, on_delete=models.PROTECT)
 
     class Meta:

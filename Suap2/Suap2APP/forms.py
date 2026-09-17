@@ -23,6 +23,50 @@ class TarefaForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['prazo'].input_formats = ['%Y-%m-%dT%H:%M']
 
+    def save(self, commit=True):
+        # Prazo novo merece um lembrete novo
+        if 'prazo' in self.changed_data:
+            self.instance.lembrete_enviado_em = None
+        return super().save(commit)
+
+
+class TarefaFiltroForm(forms.Form):
+    STATUS_CHOICES = [
+        ('', 'Todas'),
+        ('pendentes', 'Pendentes'),
+        ('atrasadas', 'Atrasadas'),
+        ('concluidas', 'Concluídas'),
+    ]
+
+    q = forms.CharField(
+        label='Buscar',
+        required=False,
+        widget=forms.TextInput(attrs={'placeholder': 'Buscar pelo título', 'type': 'search'}),
+    )
+    status = forms.ChoiceField(label='Situação', choices=STATUS_CHOICES, required=False)
+    responsavel = forms.ModelChoiceField(
+        label='Responsável',
+        queryset=Responsavel.objects.all(),
+        required=False,
+        empty_label='Todos',
+    )
+
+    def filtrar(self, tarefas, agora):
+        if not self.is_valid():
+            return tarefas
+        dados = self.cleaned_data
+        if dados['q']:
+            tarefas = tarefas.filter(titulo__icontains=dados['q'])
+        if dados['responsavel']:
+            tarefas = tarefas.filter(pessoa_responsavel=dados['responsavel'])
+        if dados['status'] == 'pendentes':
+            tarefas = tarefas.filter(concluida_em__isnull=True)
+        elif dados['status'] == 'atrasadas':
+            tarefas = tarefas.filter(concluida_em__isnull=True, prazo__lt=agora)
+        elif dados['status'] == 'concluidas':
+            tarefas = tarefas.filter(concluida_em__isnull=False)
+        return tarefas
+
 
 class ResponsavelForm(forms.ModelForm):
     class Meta:

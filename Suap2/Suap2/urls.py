@@ -20,6 +20,7 @@ urlpatterns = [
     path('tarefas/<int:pk>/concluir/', views.tarefa_toggle, name='tarefa_toggle'),
     path('responsaveis/', views.ResponsavelListView.as_view(), name='responsavel_list'),
     path('responsaveis/novo/', views.ResponsavelCreateView.as_view(), name='responsavel_create'),
+    path('responsaveis/<int:pk>/', views.ResponsavelDetailView.as_view(), name='responsavel_detail'),
     path('responsaveis/<int:pk>/editar/', views.ResponsavelUpdateView.as_view(), name='responsavel_update'),
     path('responsaveis/<int:pk>/excluir/', views.ResponsavelDeleteView.as_view(), name='responsavel_delete'),
 ]

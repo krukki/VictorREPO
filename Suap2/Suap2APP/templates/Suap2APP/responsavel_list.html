@@ -13,7 +13,7 @@
             {% for responsavel in responsaveis %}
                 <div class="item">
                     <div class="item-info">
-                        <div class="item-titulo">{{ responsavel.nome }}</div>
+                        <div class="item-titulo"><a href="{% url 'responsavel_detail' responsavel.pk %}">{{ responsavel.nome }}</a></div>
                         <div class="item-detalhe">
                             CPF: {{ responsavel.cpf }}
                             {% if responsavel.email %} · {{ responsavel.email }}{% endif %}

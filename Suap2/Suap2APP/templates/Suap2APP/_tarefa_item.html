@@ -1,0 +1,31 @@
+<div class="item">
+    <div class="item-info">
+        <div class="item-titulo{% if tarefa.concluida_em %} concluida{% endif %}">
+            {{ tarefa.titulo }}
+        </div>
+        <div class="item-detalhe">
+            {% if tarefa.concluida_em %}
+                Concluída em {{ tarefa.concluida_em|date:"d/m/Y H:i" }}
+            {% elif tarefa.prazo < now %}
+                <span class="atrasada">Atrasada — prazo era {{ tarefa.prazo|date:"d/m/Y H:i" }}</span>
+            {% else %}
+                Prazo: {{ tarefa.prazo|date:"d/m/Y H:i" }}
+            {% endif %}
+            {% if mostrar_responsavel %}
+                · Responsável:
+                <a href="{% url 'responsavel_detail' tarefa.pessoa_responsavel.pk %}">{{ tarefa.pessoa_responsavel.nome }}</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="acoes">
+        <form method="post" action="{% url 'tarefa_toggle' tarefa.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button type="submit" class="btn btn-secondary btn-small">
+                {% if tarefa.concluida_em %}Reabrir{% else %}Concluir{% endif %}
+            </button>
+        </form>
+        <a class="btn btn-secondary btn-small" href="{% url 'tarefa_update' tarefa.pk %}">Editar</a>
+        <a class="btn btn-danger btn-small" href="{% url 'tarefa_delete' tarefa.pk %}">Excluir</a>
+    </div>
+</div>

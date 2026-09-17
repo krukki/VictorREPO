@@ -8,38 +8,47 @@
         <a class="btn btn-primary" href="{% url 'tarefa_create' %}">+ Nova tarefa</a>
     </div>
 
+    <form method="get" class="filtros">
+        <div class="filtro-busca">
+            <label for="{{ filtro.q.id_for_label }}">{{ filtro.q.label }}</label>
+            {{ filtro.q }}
+        </div>
+        <div>
+            <label for="{{ filtro.status.id_for_label }}">{{ filtro.status.label }}</label>
+            {{ filtro.status }}
+        </div>
+        <div>
+            <label for="{{ filtro.responsavel.id_for_label }}">{{ filtro.responsavel.label }}</label>
+            {{ filtro.responsavel }}
+        </div>
+        <div class="filtro-botoes">
+            <button type="submit" class="btn btn-secondary">Filtrar</button>
+            {% if filtrando %}
+                <a class="btn btn-link" href="{% url 'tarefa_list' %}">Limpar</a>
+            {% endif %}
+        </div>
+    </form>
+
     {% if tarefas %}
         <div class="lista">
             {% for tarefa in tarefas %}
-                <div class="item">
-                    <div class="item-info">
-                        <div class="item-titulo{% if tarefa.concluida_em %} concluida{% endif %}">
-                            {{ tarefa.titulo }}
-                        </div>
-                        <div class="item-detalhe">
-                            {% if tarefa.concluida_em %}
-                                Concluída em {{ tarefa.concluida_em|date:"d/m/Y H:i" }}
-                            {% elif tarefa.prazo < now %}
-                                <span class="atrasada">Atrasada — prazo era {{ tarefa.prazo|date:"d/m/Y H:i" }}</span>
-                            {% else %}
-                                Prazo: {{ tarefa.prazo|date:"d/m/Y H:i" }}
-                            {% endif %}
-                            · Responsável: {{ tarefa.pessoa_responsavel.nome }}
-                        </div>
-                    </div>
-                    <div class="acoes">
-                        <form method="post" action="{% url 'tarefa_toggle' tarefa.pk %}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-secondary btn-small">
-                                {% if tarefa.concluida_em %}Reabrir{% else %}Concluir{% endif %}
-                            </button>
-                        </form>
-                        <a class="btn btn-secondary btn-small" href="{% url 'tarefa_update' tarefa.pk %}">Editar</a>
-                        <a class="btn btn-danger btn-small" href="{% url 'tarefa_delete' tarefa.pk %}">Excluir</a>
-                    </div>
-                </div>
+                {% include 'Suap2APP/_tarefa_item.html' with mostrar_responsavel=True %}
             {% endfor %}
         </div>
+
+        {% if is_paginated %}
+            <nav class="paginacao" aria-label="Páginas">
+                {% if page_obj.has_previous %}
+                    <a class="btn btn-secondary btn-small" href="{% querystring page=page_obj.previous_page_number %}">‹ Anterior</a>
+                {% endif %}
+                <span>Página {{ page_obj.number }} de {{ paginator.num_pages }}</span>
+                {% if page_obj.has_next %}
+                    <a class="btn btn-secondary btn-small" href="{% querystring page=page_obj.next_page_number %}">Próxima ›</a>
+                {% endif %}
+            </nav>
+        {% endif %}
+    {% elif filtrando %}
+        <p class="vazio">Nenhuma tarefa encontrada com esses filtros.</p>
     {% else %}
         <p class="vazio">Nenhuma tarefa cadastrada ainda.</p>
     {% endif %}

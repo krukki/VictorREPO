@@ -5,15 +5,15 @@ from .models import Tarefa, Responsavel
 class TarefaForm(forms.ModelForm):
     class Meta:
         model = Tarefa
-        fields = ['title', 'deadline', 'pessoa_responsavel']
+        fields = ['titulo', 'prazo', 'pessoa_responsavel']
         labels = {
-            'title': 'Título',
-            'deadline': 'Prazo',
+            'titulo': 'Título',
+            'prazo': 'Prazo',
             'pessoa_responsavel': 'Responsável',
         }
         widgets = {
-            'title': forms.TextInput(attrs={'placeholder': 'O que precisa ser feito?'}),
-            'deadline': forms.DateTimeInput(
+            'titulo': forms.TextInput(attrs={'placeholder': 'O que precisa ser feito?'}),
+            'prazo': forms.DateTimeInput(
                 attrs={'type': 'datetime-local'},
                 format='%Y-%m-%dT%H:%M',
             ),
@@ -21,7 +21,7 @@ class TarefaForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['deadline'].input_formats = ['%Y-%m-%dT%H:%M']
+        self.fields['prazo'].input_formats = ['%Y-%m-%dT%H:%M']
 
 
 class ResponsavelForm(forms.ModelForm):

@@ -54,7 +54,7 @@ def tarefa_delete(request, pk):
 def tarefa_toggle(request, pk):
     tarefa = get_object_or_404(Tarefa, pk=pk)
     if request.method == 'POST':
-        tarefa.finished_at = None if tarefa.finished_at else timezone.now()
+        tarefa.concluida_em = None if tarefa.concluida_em else timezone.now()
         tarefa.save()
     return redirect('tarefa_list')
 

@@ -13,16 +13,16 @@
             {% for tarefa in tarefas %}
                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1px solid #e9ecef; border-radius: 8px;">
                     <div style="min-width: 0;">
-                        <div style="font-weight: 600; {% if tarefa.finished_at %}text-decoration: line-through; color: #868e96;{% endif %}">
-                            {{ tarefa.title }}
+                        <div style="font-weight: 600; {% if tarefa.concluida_em %}text-decoration: line-through; color: #868e96;{% endif %}">
+                            {{ tarefa.titulo }}
                         </div>
                         <div style="font-size: 13px; color: #868e96;">
-                            {% if tarefa.finished_at %}
-                                Concluída em {{ tarefa.finished_at|date:"d/m/Y H:i" }}
-                            {% elif tarefa.deadline < now %}
-                                <span style="color: #c92a2a;">Atrasada — prazo era {{ tarefa.deadline|date:"d/m/Y H:i" }}</span>
+                            {% if tarefa.concluida_em %}
+                                Concluída em {{ tarefa.concluida_em|date:"d/m/Y H:i" }}
+                            {% elif tarefa.prazo < now %}
+                                <span style="color: #c92a2a;">Atrasada — prazo era {{ tarefa.prazo|date:"d/m/Y H:i" }}</span>
                             {% else %}
-                                Prazo: {{ tarefa.deadline|date:"d/m/Y H:i" }}
+                                Prazo: {{ tarefa.prazo|date:"d/m/Y H:i" }}
                             {% endif %}
                             · Responsável: {{ tarefa.pessoa_responsavel.nome }}
                         </div>
@@ -31,7 +31,7 @@
                         <form method="post" action="{% url 'tarefa_toggle' tarefa.pk %}">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-secondary btn-small">
-                                {% if tarefa.finished_at %}Reabrir{% else %}Concluir{% endif %}
+                                {% if tarefa.concluida_em %}Reabrir{% else %}Concluir{% endif %}
                             </button>
                         </form>
                         <a class="btn btn-secondary btn-small" href="{% url 'tarefa_update' tarefa.pk %}">Editar</a>

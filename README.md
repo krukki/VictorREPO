@@ -2,6 +2,9 @@
 
 Gerenciador de tarefas em Django: cadastro de tarefas e de responsáveis.
 
+Este arquivo explica **como rodar**. Para entender **como o código funciona por dentro**,
+veja o [GUIA.md](GUIA.md).
+
 ## Como rodar
 
 ```bash

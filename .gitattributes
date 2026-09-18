@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# O banco e binario: nunca normalizar fim de linha (corromperia o arquivo)
+*.sqlite3 binary

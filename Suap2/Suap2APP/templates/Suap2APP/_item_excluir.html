@@ -1,0 +1,5 @@
+{% comment %}Botão de excluir um item de dentro da tarefa. Quem inclui define `tipo` e `pk`.{% endcomment %}
+<form method="post" action="{% url 'item_delete' tipo pk %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger btn-small">Excluir</button>
+</form>

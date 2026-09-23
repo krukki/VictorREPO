@@ -5,11 +5,16 @@
 {% block content %}
     <h1>Excluir responsável</h1>
 
-    {% if total_tarefas %}
+    {% if total_tarefas or total_registros %}
         <p>
             Não é possível excluir <strong>{{ responsavel.nome }}</strong>: ainda há
-            {{ total_tarefas }} tarefa{{ total_tarefas|pluralize }} atribuída{{ total_tarefas|pluralize }} a essa pessoa.
-            Reatribua ou exclua essas tarefas primeiro.
+            {% if total_tarefas %}
+                {{ total_tarefas }} tarefa{{ total_tarefas|pluralize }} atribuída{{ total_tarefas|pluralize }} a essa pessoa{% if total_registros %} e{% endif %}
+            {% endif %}
+            {% if total_registros %}
+                {{ total_registros }} registro{{ total_registros|pluralize }} de tempo no nome dela
+            {% endif %}.
+            Reatribua ou exclua esses registros primeiro.
         </p>
 
         <div class="botoes">

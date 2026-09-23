@@ -12,6 +12,7 @@
             <nav>
                 <a href="{% url 'painel' %}">Painel</a>
                 <a href="{% url 'tarefa_list' %}">Tarefas</a>
+                <a href="{% url 'projeto_list' %}">Projetos</a>
                 <a href="{% url 'responsavel_list' %}">Responsáveis</a>
                 <div class="nav-usuario">
                     <span>{{ user.get_username }}</span>
@@ -19,6 +20,12 @@
                         {% csrf_token %}
                         <button type="submit" class="btn btn-link">Sair</button>
                     </form>
+                </div>
+                <div class="nav-cadastros">
+                    Cadastros:
+                    <a href="{% url 'departamento_list' %}">Departamentos</a>
+                    <a href="{% url 'categoria_list' %}">Categorias</a>
+                    <a href="{% url 'etiqueta_list' %}">Etiquetas</a>
                 </div>
             </nav>
         {% endif %}

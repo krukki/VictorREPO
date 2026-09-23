@@ -1,0 +1,33 @@
+{% extends 'Suap2APP/base.html' %}
+
+{% block title %}Etiquetas — Suap2{% endblock %}
+
+{% block content %}
+    <div class="cabecalho">
+        <h1>Etiquetas</h1>
+        <a class="btn btn-primary" href="{% url 'etiqueta_create' %}">+ Nova etiqueta</a>
+    </div>
+
+    {% if etiquetas %}
+        <div class="lista">
+            {% for etiqueta in etiquetas %}
+                <div class="item">
+                    <div class="item-info">
+                        <div class="item-titulo">
+                            <span class="badge badge-etiqueta">{{ etiqueta.nome }}</span>
+                        </div>
+                        <div class="item-detalhe">
+                            <a href="{% url 'tarefa_list' %}?etiqueta={{ etiqueta.pk }}">{{ etiqueta.total }} tarefa{{ etiqueta.total|pluralize }}</a>
+                        </div>
+                    </div>
+                    <div class="acoes">
+                        <a class="btn btn-secondary btn-small" href="{% url 'etiqueta_update' etiqueta.pk %}">Editar</a>
+                        <a class="btn btn-danger btn-small" href="{% url 'etiqueta_delete' etiqueta.pk %}">Excluir</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="vazio">Nenhuma etiqueta cadastrada ainda.</p>
+    {% endif %}
+{% endblock %}

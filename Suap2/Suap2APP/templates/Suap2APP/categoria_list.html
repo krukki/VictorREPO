@@ -1,0 +1,33 @@
+{% extends 'Suap2APP/base.html' %}
+
+{% block title %}Categorias — Suap2{% endblock %}
+
+{% block content %}
+    <div class="cabecalho">
+        <h1>Categorias</h1>
+        <a class="btn btn-primary" href="{% url 'categoria_create' %}">+ Nova categoria</a>
+    </div>
+
+    {% if categorias %}
+        <div class="lista">
+            {% for categoria in categorias %}
+                <div class="item">
+                    <div class="item-info">
+                        <div class="item-titulo">
+                            <span class="badge cor-{{ categoria.cor }}">{{ categoria.nome }}</span>
+                        </div>
+                        <div class="item-detalhe">
+                            <a href="{% url 'tarefa_list' %}?categoria={{ categoria.pk }}">{{ categoria.total }} tarefa{{ categoria.total|pluralize }}</a>
+                        </div>
+                    </div>
+                    <div class="acoes">
+                        <a class="btn btn-secondary btn-small" href="{% url 'categoria_update' categoria.pk %}">Editar</a>
+                        <a class="btn btn-danger btn-small" href="{% url 'categoria_delete' categoria.pk %}">Excluir</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="vazio">Nenhuma categoria cadastrada ainda.</p>
+    {% endif %}
+{% endblock %}

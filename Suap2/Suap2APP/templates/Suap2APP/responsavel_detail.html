@@ -8,8 +8,10 @@
             <h1>{{ responsavel.nome }}</h1>
             <div class="item-detalhe">
                 CPF: {{ responsavel.cpf }}
+                {% if responsavel.departamento %} · {{ responsavel.departamento }}{% endif %}
                 {% if responsavel.email %} · {{ responsavel.email }}{% endif %}
                 {% if responsavel.telefone %} · {{ responsavel.telefone }}{% endif %}
+                {% if horas %} · {{ horas|floatformat:"-2" }} h registradas{% endif %}
             </div>
         </div>
         <a class="btn btn-secondary" href="{% url 'responsavel_update' responsavel.pk %}">Editar</a>

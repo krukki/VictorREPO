@@ -6,6 +6,14 @@
     <h1>Excluir tarefa</h1>
     <p>Tem certeza que deseja excluir a tarefa <strong>{{ tarefa.titulo }}</strong>? Essa ação não pode ser desfeita.</p>
 
+    {% if total_subtarefas or total_comentarios or total_anexos or total_registros %}
+        <p class="aviso">
+            Vão embora junto com ela:
+            {{ total_subtarefas }} subtarefa(s), {{ total_comentarios }} comentário(s),
+            {{ total_anexos }} anexo(s) e {{ total_registros }} registro(s) de tempo.
+        </p>
+    {% endif %}
+
     <form method="post" class="botoes">
         {% csrf_token %}
         <button type="submit" class="btn btn-danger">Excluir</button>

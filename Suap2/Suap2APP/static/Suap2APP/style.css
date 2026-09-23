@@ -105,6 +105,7 @@ form {
 
 nav {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 16px;
     margin-bottom: 24px;
@@ -112,6 +113,15 @@ nav {
     border-bottom: 1px solid #e9ecef;
     font-size: 14px;
     font-weight: 600;
+}
+
+.nav-cadastros {
+    flex-basis: 100%;
+    display: flex;
+    gap: 12px;
+    color: #868e96;
+    font-weight: 400;
+    font-size: 13px;
 }
 
 .nav-usuario {
@@ -357,5 +367,186 @@ h2 {
     .item {
         flex-direction: column;
         align-items: flex-start;
+    }
+}
+
+/* Marcadores: categorias e etiquetas */
+
+.marcadores {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge:hover {
+    text-decoration: none;
+    filter: brightness(0.95);
+}
+
+.badge-etiqueta,
+.cor-cinza {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.cor-azul {
+    background: #e7f5ff;
+    color: #1864ab;
+}
+
+.cor-verde {
+    background: #ebfbee;
+    color: #2b8a3e;
+}
+
+.cor-amarelo {
+    background: #fff9db;
+    color: #7c5e10;
+}
+
+.cor-vermelho {
+    background: #fff0f0;
+    color: #c92a2a;
+}
+
+/* Tela da tarefa */
+
+h1.concluida {
+    text-decoration: line-through;
+    color: #868e96;
+}
+
+.ficha {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 6px 16px;
+    margin: 0 0 8px;
+    font-size: 14px;
+}
+
+.ficha dt {
+    color: #868e96;
+}
+
+.ficha dd {
+    margin: 0;
+}
+
+.progresso {
+    height: 8px;
+    margin-bottom: 10px;
+    border-radius: 999px;
+    background: #e9ecef;
+    overflow: hidden;
+}
+
+.progresso-feito {
+    height: 100%;
+    background: #3b5bdb;
+}
+
+.lista-itens {
+    margin-bottom: 12px;
+}
+
+.concluida {
+    text-decoration: line-through;
+    color: #868e96;
+}
+
+.texto-comentario {
+    font-size: 14px;
+    overflow-wrap: anywhere;
+}
+
+/* Formulários de adicionar item dentro da tarefa */
+
+.form-item {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px 12px;
+    align-items: end;
+    margin-bottom: 8px;
+    padding: 14px;
+    border-radius: 8px;
+    background: #f8f9fa;
+}
+
+/* Campo sozinho no formulário, ou caixa de texto grande, ocupa a linha inteira */
+.form-item .campo-item:only-of-type,
+.form-item .campo-item:has(textarea) {
+    grid-column: 1 / -1;
+}
+
+.form-item label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.form-item input,
+.form-item select,
+.form-item textarea {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    background: #fff;
+}
+
+.form-item button {
+    grid-column: 1 / -1;
+    justify-self: start;
+}
+
+/* Textarea e caixas de seleção nos formulários grandes */
+
+.formulario textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    background: #fff;
+}
+
+.formulario ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.formulario ul label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-weight: 400;
+}
+
+.formulario ul input {
+    width: auto;
+}
+
+@media (max-width: 520px) {
+    .form-item,
+    .ficha {
+        grid-template-columns: 1fr;
     }
 }

@@ -36,6 +36,40 @@
         <p class="vazio">Nenhuma tarefa pendente.</p>
     {% endif %}
 
+    <h2>Pendências por projeto</h2>
+
+    {% if projetos %}
+        <div class="lista">
+            {% for projeto in projetos %}
+                <div class="item">
+                    <a class="item-titulo" href="{% url 'projeto_detail' projeto.pk %}">{{ projeto.nome }}</a>
+                    <div class="item-detalhe">
+                        <a href="{% url 'tarefa_list' %}?projeto={{ projeto.pk }}&amp;status=pendentes">{{ projeto.pendentes }} pendente{{ projeto.pendentes|pluralize }}</a>
+                        {% if projeto.atrasadas %}
+                            · <a class="atrasada" href="{% url 'tarefa_list' %}?projeto={{ projeto.pk }}&amp;status=atrasadas">{{ projeto.atrasadas }} atrasada{{ projeto.atrasadas|pluralize }}</a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="vazio">Nenhum projeto com tarefas pendentes.</p>
+    {% endif %}
+
+    <h2>Pendências por categoria</h2>
+
+    {% if categorias %}
+        <div class="marcadores">
+            {% for categoria in categorias %}
+                <a class="badge cor-{{ categoria.cor }}" href="{% url 'tarefa_list' %}?categoria={{ categoria.pk }}&amp;status=pendentes">
+                    {{ categoria.nome }}: {{ categoria.pendentes }}
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="vazio">Nenhuma categoria com tarefas pendentes.</p>
+    {% endif %}
+
     <h2>Pendências por responsável</h2>
 
     {% if responsaveis %}

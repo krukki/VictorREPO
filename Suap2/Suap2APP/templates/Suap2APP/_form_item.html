@@ -1,0 +1,25 @@
+{% comment %}
+Formulário de adicionar um item na tela da tarefa. Quem inclui define:
+`form`, `acao` (o que vai no campo escondido lido pela TarefaDetailView),
+`rotulo` do botão e, quando houver upload, `arquivo=True`.
+{% endcomment %}
+<form method="post" class="form-item"{% if arquivo %} enctype="multipart/form-data"{% endif %}>
+    {% csrf_token %}
+    <input type="hidden" name="acao" value="{{ acao }}">
+
+    {% for error in form.non_field_errors %}
+        <div class="erro">{{ error }}</div>
+    {% endfor %}
+
+    {% for field in form %}
+        <div class="campo-item">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% for error in field.errors %}
+                <div class="erro">{{ error }}</div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+
+    <button type="submit" class="btn btn-secondary btn-small">{{ rotulo }}</button>
+</form>

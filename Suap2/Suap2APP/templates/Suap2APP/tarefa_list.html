@@ -13,14 +13,14 @@
             <label for="{{ filtro.q.id_for_label }}">{{ filtro.q.label }}</label>
             {{ filtro.q }}
         </div>
-        <div>
-            <label for="{{ filtro.status.id_for_label }}">{{ filtro.status.label }}</label>
-            {{ filtro.status }}
-        </div>
-        <div>
-            <label for="{{ filtro.responsavel.id_for_label }}">{{ filtro.responsavel.label }}</label>
-            {{ filtro.responsavel }}
-        </div>
+        {% for campo in filtro %}
+            {% if campo.name != 'q' %}
+                <div>
+                    <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+                    {{ campo }}
+                </div>
+            {% endif %}
+        {% endfor %}
         <div class="filtro-botoes">
             <button type="submit" class="btn btn-secondary">Filtrar</button>
             {% if filtrando %}

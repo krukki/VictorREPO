@@ -1,0 +1,39 @@
+{% extends 'Suap2APP/base.html' %}
+
+{% block title %}Projetos — Suap2{% endblock %}
+
+{% block content %}
+    <div class="cabecalho">
+        <h1>Projetos</h1>
+        <a class="btn btn-primary" href="{% url 'projeto_create' %}">+ Novo projeto</a>
+    </div>
+
+    {% if projetos %}
+        <div class="lista">
+            {% for projeto in projetos %}
+                <div class="item">
+                    <div class="item-info">
+                        <div class="item-titulo">
+                            <a href="{% url 'projeto_detail' projeto.pk %}">{{ projeto.nome }}</a>
+                            {% if projeto.encerrado %}<span class="badge badge-etiqueta">encerrado</span>{% endif %}
+                        </div>
+                        <div class="item-detalhe">
+                            {% if projeto.departamento %}{{ projeto.departamento }} · {% endif %}
+                            {{ projeto.pendentes }} pendente{{ projeto.pendentes|pluralize }}
+                            de {{ projeto.total }} tarefa{{ projeto.total|pluralize }}
+                            {% if projeto.inicio or projeto.fim %}
+                                · {{ projeto.inicio|date:"d/m/Y"|default:"?" }} a {{ projeto.fim|date:"d/m/Y"|default:"?" }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="acoes">
+                        <a class="btn btn-secondary btn-small" href="{% url 'projeto_update' projeto.pk %}">Editar</a>
+                        <a class="btn btn-danger btn-small" href="{% url 'projeto_delete' projeto.pk %}">Excluir</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="vazio">Nenhum projeto cadastrado ainda.</p>
+    {% endif %}
+{% endblock %}

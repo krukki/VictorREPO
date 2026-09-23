@@ -1,7 +1,7 @@
 <div class="item">
     <div class="item-info">
         <div class="item-titulo{% if tarefa.concluida_em %} concluida{% endif %}">
-            {{ tarefa.titulo }}
+            <a href="{% url 'tarefa_detail' tarefa.pk %}">{{ tarefa.titulo }}</a>
         </div>
         <div class="item-detalhe">
             {% if tarefa.concluida_em %}
@@ -15,7 +15,23 @@
                 · Responsável:
                 <a href="{% url 'responsavel_detail' tarefa.pessoa_responsavel.pk %}">{{ tarefa.pessoa_responsavel.nome }}</a>
             {% endif %}
+            {% if tarefa.projeto and not esconder_projeto %}
+                · Projeto: <a href="{% url 'projeto_detail' tarefa.projeto.pk %}">{{ tarefa.projeto.nome }}</a>
+            {% endif %}
+            {% if tarefa.subtarefas.all %}
+                · Checklist: {{ tarefa.progresso }}%
+            {% endif %}
         </div>
+        {% if tarefa.categoria or tarefa.etiquetas.all %}
+            <div class="marcadores">
+                {% if tarefa.categoria %}
+                    <a class="badge cor-{{ tarefa.categoria.cor }}" href="{% url 'tarefa_list' %}?categoria={{ tarefa.categoria.pk }}">{{ tarefa.categoria.nome }}</a>
+                {% endif %}
+                {% for etiqueta in tarefa.etiquetas.all %}
+                    <a class="badge badge-etiqueta" href="{% url 'tarefa_list' %}?etiqueta={{ etiqueta.pk }}">{{ etiqueta.nome }}</a>
+                {% endfor %}
+            </div>
+        {% endif %}
     </div>
     <div class="acoes">
         <form method="post" action="{% url 'tarefa_toggle' tarefa.pk %}">

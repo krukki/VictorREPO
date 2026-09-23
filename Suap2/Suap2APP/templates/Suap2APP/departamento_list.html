@@ -1,0 +1,33 @@
+{% extends 'Suap2APP/base.html' %}
+
+{% block title %}Departamentos — Suap2{% endblock %}
+
+{% block content %}
+    <div class="cabecalho">
+        <h1>Departamentos</h1>
+        <a class="btn btn-primary" href="{% url 'departamento_create' %}">+ Novo departamento</a>
+    </div>
+
+    {% if departamentos %}
+        <div class="lista">
+            {% for departamento in departamentos %}
+                <div class="item">
+                    <div class="item-info">
+                        <div class="item-titulo">{{ departamento.nome }}</div>
+                        <div class="item-detalhe">
+                            {% if departamento.sigla %}{{ departamento.sigla }} · {% endif %}
+                            {{ departamento.total_responsaveis }} responsáve{{ departamento.total_responsaveis|pluralize:"l,is" }}
+                            · {{ departamento.total_projetos }} projeto{{ departamento.total_projetos|pluralize }}
+                        </div>
+                    </div>
+                    <div class="acoes">
+                        <a class="btn btn-secondary btn-small" href="{% url 'departamento_update' departamento.pk %}">Editar</a>
+                        <a class="btn btn-danger btn-small" href="{% url 'departamento_delete' departamento.pk %}">Excluir</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="vazio">Nenhum departamento cadastrado ainda.</p>
+    {% endif %}
+{% endblock %}

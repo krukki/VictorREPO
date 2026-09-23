@@ -1,0 +1,166 @@
+{% extends 'Suap2APP/base.html' %}
+
+{% block title %}{{ tarefa.titulo }} — Suap2{% endblock %}
+
+{% block content %}
+    <div class="cabecalho">
+        <div>
+            <h1 class="{% if tarefa.concluida_em %}concluida{% endif %}">{{ tarefa.titulo }}</h1>
+            <div class="item-detalhe">
+                {% if tarefa.concluida_em %}
+                    Concluída em {{ tarefa.concluida_em|date:"d/m/Y H:i" }}
+                {% elif tarefa.atrasada %}
+                    <span class="atrasada">Atrasada — prazo era {{ tarefa.prazo|date:"d/m/Y H:i" }}</span>
+                {% else %}
+                    Prazo: {{ tarefa.prazo|date:"d/m/Y H:i" }}
+                {% endif %}
+                · Criada em {{ tarefa.criada_em|date:"d/m/Y H:i" }}
+            </div>
+        </div>
+        <div class="acoes">
+            <form method="post" action="{% url 'tarefa_toggle' tarefa.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="btn btn-primary btn-small">
+                    {% if tarefa.concluida_em %}Reabrir{% else %}Concluir{% endif %}
+                </button>
+            </form>
+            <a class="btn btn-secondary btn-small" href="{% url 'tarefa_update' tarefa.pk %}">Editar</a>
+            <a class="btn btn-danger btn-small" href="{% url 'tarefa_delete' tarefa.pk %}">Excluir</a>
+        </div>
+    </div>
+
+    <dl class="ficha">
+        <dt>Responsável</dt>
+        <dd><a href="{% url 'responsavel_detail' tarefa.pessoa_responsavel.pk %}">{{ tarefa.pessoa_responsavel.nome }}</a></dd>
+
+        <dt>Projeto</dt>
+        <dd>
+            {% if tarefa.projeto %}
+                <a href="{% url 'projeto_detail' tarefa.projeto.pk %}">{{ tarefa.projeto.nome }}</a>
+            {% else %}—{% endif %}
+        </dd>
+
+        <dt>Categoria</dt>
+        <dd>
+            {% if tarefa.categoria %}
+                <span class="badge cor-{{ tarefa.categoria.cor }}">{{ tarefa.categoria.nome }}</span>
+            {% else %}—{% endif %}
+        </dd>
+
+        <dt>Etiquetas</dt>
+        <dd>
+            {% for etiqueta in tarefa.etiquetas.all %}
+                <span class="badge badge-etiqueta">{{ etiqueta.nome }}</span>
+            {% empty %}—{% endfor %}
+        </dd>
+
+        <dt>Tempo registrado</dt>
+        <dd>{{ tarefa.horas_registradas|floatformat:"-2" }} h</dd>
+    </dl>
+
+    <h2>Checklist</h2>
+
+    {% if tarefa.subtarefas.all %}
+        <div class="progresso" role="img" aria-label="{{ tarefa.progresso }}% concluído">
+            <div class="progresso-feito" style="width: {{ tarefa.progresso }}%"></div>
+        </div>
+        <div class="lista lista-itens">
+            {% for subtarefa in tarefa.subtarefas.all %}
+                <div class="item">
+                    <div class="item-info">
+                        <span class="{% if subtarefa.concluida %}concluida{% endif %}">{{ subtarefa.descricao }}</span>
+                    </div>
+                    <div class="acoes">
+                        <form method="post" action="{% url 'subtarefa_toggle' subtarefa.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-secondary btn-small">
+                                {% if subtarefa.concluida %}Desmarcar{% else %}Marcar{% endif %}
+                            </button>
+                        </form>
+                        {% include 'Suap2APP/_item_excluir.html' with tipo='subtarefa' pk=subtarefa.pk %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="vazio">Nenhuma subtarefa ainda.</p>
+    {% endif %}
+
+    {% include 'Suap2APP/_form_item.html' with form=form_subtarefa acao='subtarefa' rotulo='Adicionar subtarefa' %}
+
+    <h2>Comentários</h2>
+
+    {% if tarefa.comentarios.all %}
+        <div class="lista lista-itens">
+            {% for comentario in tarefa.comentarios.all %}
+                <div class="item">
+                    <div class="item-info">
+                        <div class="item-detalhe">
+                            {{ comentario.autor|default:"Anônimo" }} · {{ comentario.criado_em|date:"d/m/Y H:i" }}
+                        </div>
+                        <div class="texto-comentario">{{ comentario.texto|linebreaksbr }}</div>
+                    </div>
+                    <div class="acoes">
+                        {% include 'Suap2APP/_item_excluir.html' with tipo='comentario' pk=comentario.pk %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="vazio">Nenhum comentário ainda.</p>
+    {% endif %}
+
+    {% include 'Suap2APP/_form_item.html' with form=form_comentario acao='comentario' rotulo='Comentar' %}
+
+    <h2>Anexos</h2>
+
+    {% if tarefa.anexos.all %}
+        <div class="lista lista-itens">
+            {% for anexo in tarefa.anexos.all %}
+                <div class="item">
+                    <div class="item-info">
+                        <div class="item-titulo"><a href="{{ anexo.arquivo.url }}">{{ anexo.nome_arquivo }}</a></div>
+                        <div class="item-detalhe">
+                            {% if anexo.descricao %}{{ anexo.descricao }} · {% endif %}
+                            Enviado em {{ anexo.enviado_em|date:"d/m/Y H:i" }}
+                        </div>
+                    </div>
+                    <div class="acoes">
+                        {% include 'Suap2APP/_item_excluir.html' with tipo='anexo' pk=anexo.pk %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="vazio">Nenhum anexo ainda.</p>
+    {% endif %}
+
+    {% include 'Suap2APP/_form_item.html' with form=form_anexo acao='anexo' rotulo='Enviar anexo' arquivo=True %}
+
+    <h2>Tempo trabalhado</h2>
+
+    {% if tarefa.registros_tempo.all %}
+        <div class="lista lista-itens">
+            {% for registro in tarefa.registros_tempo.all %}
+                <div class="item">
+                    <div class="item-info">
+                        <div class="item-titulo">{{ registro.horas|floatformat:"-2" }} h · {{ registro.responsavel.nome }}</div>
+                        <div class="item-detalhe">
+                            {{ registro.data|date:"d/m/Y" }}
+                            {% if registro.observacao %} · {{ registro.observacao }}{% endif %}
+                        </div>
+                    </div>
+                    <div class="acoes">
+                        {% include 'Suap2APP/_item_excluir.html' with tipo='registro' pk=registro.pk %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <p class="item-detalhe">Total: {{ tarefa.horas_registradas|floatformat:"-2" }} h</p>
+    {% else %}
+        <p class="vazio">Nenhuma hora registrada ainda.</p>
+    {% endif %}
+
+    {% include 'Suap2APP/_form_item.html' with form=form_registro acao='registro' rotulo='Registrar tempo' %}
+{% endblock %}

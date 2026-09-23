@@ -16,6 +16,7 @@
                         <div class="item-titulo"><a href="{% url 'responsavel_detail' responsavel.pk %}">{{ responsavel.nome }}</a></div>
                         <div class="item-detalhe">
                             CPF: {{ responsavel.cpf }}
+                            {% if responsavel.departamento %} · {{ responsavel.departamento }}{% endif %}
                             {% if responsavel.email %} · {{ responsavel.email }}{% endif %}
                             {% if responsavel.telefone %} · {{ responsavel.telefone }}{% endif %}
                         </div>

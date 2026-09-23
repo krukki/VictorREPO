@@ -1,0 +1,48 @@
+{% extends 'Suap2APP/base.html' %}
+
+{% block title %}{{ projeto.nome }} — Suap2{% endblock %}
+
+{% block content %}
+    <div class="cabecalho">
+        <div>
+            <h1>{{ projeto.nome }}</h1>
+            <div class="item-detalhe">
+                {% if projeto.departamento %}{{ projeto.departamento }}{% else %}Sem departamento{% endif %}
+                {% if projeto.inicio or projeto.fim %}
+                    · {{ projeto.inicio|date:"d/m/Y"|default:"?" }} a {{ projeto.fim|date:"d/m/Y"|default:"?" }}
+                {% endif %}
+                {% if projeto.encerrado %} · encerrado{% endif %}
+                {% if horas %} · {{ horas|floatformat:"-2" }} h registradas{% endif %}
+            </div>
+        </div>
+        <a class="btn btn-secondary" href="{% url 'projeto_update' projeto.pk %}">Editar</a>
+    </div>
+
+    {% if projeto.descricao %}
+        <p>{{ projeto.descricao|linebreaksbr }}</p>
+    {% endif %}
+
+    <div class="contadores">
+        <a class="contador" href="{% url 'tarefa_list' %}?projeto={{ projeto.pk }}&amp;status=pendentes">
+            <strong>{{ pendentes }}</strong> pendente{{ pendentes|pluralize }}
+        </a>
+        <a class="contador{% if atrasadas %} contador-alerta{% endif %}" href="{% url 'tarefa_list' %}?projeto={{ projeto.pk }}&amp;status=atrasadas">
+            <strong>{{ atrasadas }}</strong> atrasada{{ atrasadas|pluralize }}
+        </a>
+        <a class="contador" href="{% url 'tarefa_list' %}?projeto={{ projeto.pk }}&amp;status=concluidas">
+            <strong>{{ concluidas }}</strong> concluída{{ concluidas|pluralize }}
+        </a>
+    </div>
+
+    <h2>Tarefas</h2>
+
+    {% if tarefas %}
+        <div class="lista">
+            {% for tarefa in tarefas %}
+                {% include 'Suap2APP/_tarefa_item.html' with mostrar_responsavel=True esconder_projeto=True %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="vazio">Nenhuma tarefa neste projeto.</p>
+    {% endif %}
+{% endblock %}

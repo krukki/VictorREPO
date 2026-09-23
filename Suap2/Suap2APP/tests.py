@@ -35,6 +35,7 @@ class BaseTestCase(TestCase):
 class AutenticacaoTests(TestCase):
     def test_paginas_exigem_login(self):
         urls = [
+            reverse('painel'),
             reverse('tarefa_list'),
             reverse('tarefa_create'),
             reverse('responsavel_list'),
@@ -126,6 +127,49 @@ class TarefaTests(BaseTestCase):
         tarefa = self.criar_tarefa()
         response = self.client.get(reverse('tarefa_toggle', args=[tarefa.pk]))
         self.assertEqual(response.status_code, 405)
+
+
+class PainelTests(BaseTestCase):
+    def test_contadores(self):
+        self.criar_tarefa('Pendente', dias=3)
+        self.criar_tarefa('Pendente longe', dias=30)
+        self.criar_tarefa('Atrasada', dias=-1)
+        self.criar_tarefa('Concluída', dias=-2, concluida_em=timezone.now())
+        self.criar_tarefa('Concluída antiga', dias=-20, concluida_em=timezone.now() - timedelta(days=10))
+        response = self.client.get(reverse('painel'))
+        self.assertEqual(response.context['pendentes'], 3)
+        self.assertEqual(response.context['atrasadas'], 1)
+        self.assertEqual(response.context['concluidas'], 2)
+        self.assertEqual(response.context['vencem_na_semana'], 1)
+        self.assertEqual(response.context['concluidas_na_semana'], 1)
+
+    def test_proximas_sao_pendentes_por_prazo(self):
+        for dias in [5, 1, 3, 2, 4, 6]:
+            self.criar_tarefa(f'Em {dias} dias', dias=dias)
+        self.criar_tarefa('Concluída', dias=0, concluida_em=timezone.now())
+        response = self.client.get(reverse('painel'))
+        titulos = [t.titulo for t in response.context['proximas']]
+        self.assertEqual(titulos, ['Em 1 dias', 'Em 2 dias', 'Em 3 dias', 'Em 4 dias', 'Em 5 dias'])
+
+    def test_responsaveis_sem_pendencias_nao_aparecem(self):
+        outro = Responsavel.objects.create(nome='Bruno', cpf='111.444.777-35')
+        Tarefa.objects.create(
+            titulo='Feita', prazo=timezone.now(), pessoa_responsavel=outro, concluida_em=timezone.now(),
+        )
+        self.criar_tarefa('Atrasada', dias=-1)
+        response = self.client.get(reverse('painel'))
+        responsaveis = list(response.context['responsaveis'])
+        self.assertEqual(responsaveis, [self.responsavel])
+        self.assertEqual(responsaveis[0].atrasadas, 1)
+
+    def test_consultas_nao_crescem_com_tarefas(self):
+        self.criar_tarefa()
+        with self.assertNumQueries(5) as consultas:
+            self.client.get(reverse('painel'))
+        for dias in range(10):
+            self.criar_tarefa(dias=dias)
+        with self.assertNumQueries(len(consultas)):
+            self.client.get(reverse('painel'))
 
 
 class ResponsavelTests(BaseTestCase):

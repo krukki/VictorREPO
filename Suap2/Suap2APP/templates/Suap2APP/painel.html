@@ -1,0 +1,58 @@
+{% extends 'Suap2APP/base.html' %}
+
+{% block title %}Painel — Suap2{% endblock %}
+
+{% block content %}
+    <div class="cabecalho">
+        <h1>Painel</h1>
+        <a class="btn btn-primary" href="{% url 'tarefa_create' %}">+ Nova tarefa</a>
+    </div>
+
+    <div class="contadores">
+        <a class="contador" href="{% url 'tarefa_list' %}?status=pendentes">
+            <strong>{{ pendentes }}</strong> pendente{{ pendentes|pluralize }}
+        </a>
+        <a class="contador{% if atrasadas %} contador-alerta{% endif %}" href="{% url 'tarefa_list' %}?status=atrasadas">
+            <strong>{{ atrasadas }}</strong> atrasada{{ atrasadas|pluralize }}
+        </a>
+        <a class="contador" href="{% url 'tarefa_list' %}?status=concluidas">
+            <strong>{{ concluidas }}</strong> concluída{{ concluidas|pluralize }}
+        </a>
+    </div>
+    <p class="item-detalhe painel-semana">
+        Próximos 7 dias: {{ vencem_na_semana }} tarefa{{ vencem_na_semana|pluralize }} vence{{ vencem_na_semana|pluralize:"m" }}
+        · Últimos 7 dias: {{ concluidas_na_semana }} concluída{{ concluidas_na_semana|pluralize }}
+    </p>
+
+    <h2>Próximos prazos</h2>
+
+    {% if proximas %}
+        <div class="lista">
+            {% for tarefa in proximas %}
+                {% include 'Suap2APP/_tarefa_item.html' with mostrar_responsavel=True %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="vazio">Nenhuma tarefa pendente.</p>
+    {% endif %}
+
+    <h2>Pendências por responsável</h2>
+
+    {% if responsaveis %}
+        <div class="lista">
+            {% for responsavel in responsaveis %}
+                <div class="item">
+                    <a class="item-titulo" href="{% url 'responsavel_detail' responsavel.pk %}">{{ responsavel.nome }}</a>
+                    <div class="item-detalhe">
+                        <a href="{% url 'tarefa_list' %}?responsavel={{ responsavel.pk }}&amp;status=pendentes">{{ responsavel.pendentes }} pendente{{ responsavel.pendentes|pluralize }}</a>
+                        {% if responsavel.atrasadas %}
+                            · <a class="atrasada" href="{% url 'tarefa_list' %}?responsavel={{ responsavel.pk }}&amp;status=atrasadas">{{ responsavel.atrasadas }} atrasada{{ responsavel.atrasadas|pluralize }}</a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="vazio">Ninguém com tarefas pendentes.</p>
+    {% endif %}
+{% endblock %}

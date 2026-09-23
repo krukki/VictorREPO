@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -8,7 +10,7 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView, DeleteView
 
 from .models import Tarefa, Responsavel
 from .forms import TarefaForm, TarefaFiltroForm, ResponsavelForm
@@ -26,7 +28,36 @@ class FormularioMixin(LoginRequiredMixin, SuccessMessageMixin):
         return context
 
 
-# tarefas ksadkadkaskadakdakdakd
+class PainelView(LoginRequiredMixin, TemplateView):
+    """Resumo das tarefas; as condições seguem as de TarefaFiltroForm.filtrar."""
+    template_name = 'Suap2APP/painel.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        agora = timezone.now()
+        semana = timedelta(days=7)
+        pendente = Q(concluida_em__isnull=True)
+        context.update(Tarefa.objects.aggregate(
+            pendentes=Count('pk', filter=pendente),
+            atrasadas=Count('pk', filter=pendente & Q(prazo__lt=agora)),
+            concluidas=Count('pk', filter=Q(concluida_em__isnull=False)),
+            vencem_na_semana=Count('pk', filter=pendente & Q(prazo__gte=agora, prazo__lt=agora + semana)),
+            concluidas_na_semana=Count('pk', filter=Q(concluida_em__gte=agora - semana)),
+        ))
+        pendente_do_responsavel = Q(tarefa__concluida_em__isnull=True)
+        context['responsaveis'] = Responsavel.objects.annotate(
+            pendentes=Count('tarefa', filter=pendente_do_responsavel),
+            atrasadas=Count('tarefa', filter=pendente_do_responsavel & Q(tarefa__prazo__lt=agora)),
+        ).filter(pendentes__gt=0).order_by('-atrasadas', '-pendentes', 'nome')
+        context['proximas'] = (
+            Tarefa.objects.filter(concluida_em__isnull=True)
+            .select_related('pessoa_responsavel')
+            .order_by('prazo')[:5]
+        )
+        context['now'] = agora
+        return context
+
+
 
 class TarefaListView(LoginRequiredMixin, ListView):
     model = Tarefa

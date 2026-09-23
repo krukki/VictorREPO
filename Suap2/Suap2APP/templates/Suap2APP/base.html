@@ -10,6 +10,7 @@
     <div class="card">
         {% if user.is_authenticated %}
             <nav>
+                <a href="{% url 'painel' %}">Painel</a>
                 <a href="{% url 'tarefa_list' %}">Tarefas</a>
                 <a href="{% url 'responsavel_list' %}">Responsáveis</a>
                 <div class="nav-usuario">

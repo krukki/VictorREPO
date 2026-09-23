@@ -1,6 +1,9 @@
 # Suap2
 
-Gerenciador de tarefas em Django: cadastro de tarefas e de responsáveis.
+Gerenciador de tarefas em Django. Cada tarefa tem responsável, prazo, projeto, categoria e
+etiquetas, e na página dela ficam o checklist, os comentários, os anexos e as horas
+trabalhadas. São dez modelos: `Departamento`, `Responsavel`, `Projeto`, `Categoria`,
+`Etiqueta`, `Tarefa`, `Subtarefa`, `Comentario`, `Anexo` e `RegistroTempo`.
 
 Este arquivo explica **como rodar**. Para entender **como o código funciona por dentro**,
 veja o [GUIA.md](GUIA.md).
@@ -18,6 +21,20 @@ python manage.py runserver
 ```
 
 Acesse http://127.0.0.1:8000/ e entre com o usuário criado. Todas as páginas exigem login.
+
+Para começar com dados de exemplo (departamentos, projetos, categorias, etiquetas, tarefas
+e os itens delas):
+
+```bash
+python manage.py loaddata exemplos
+```
+
+## Anexos
+
+Os arquivos enviados nas tarefas ficam em `Suap2/media/`, fora do Git. No `runserver` o
+próprio Django os serve; em produção (`DJANGO_DEBUG=0`) isso é trabalho do servidor web.
+Mude o lugar com `MEDIA_ROOT` em `settings.py` e o limite de tamanho em
+`TAMANHO_MAXIMO_ANEXO` (`Suap2APP/forms.py`, 10 MB por padrão).
 
 ## Testes
 

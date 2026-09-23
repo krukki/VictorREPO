@@ -29,9 +29,10 @@ python manage.py changepassword <usuario>
 ### Dados de exemplo
 
 O banco em si (`db.sqlite3`) **não vai para o Git** — está no `.gitignore`, porque banco de
-dados não se versiona. O que está versionado é uma *fixture*: um arquivo JSON com 5
-responsáveis e 5 tarefas de exemplo, em `Suap2APP/fixtures/exemplos.json`. Para encher um
-banco vazio com eles:
+dados não se versiona. O que está versionado é uma *fixture*: um arquivo JSON em
+`Suap2APP/fixtures/exemplos.json` com 3 departamentos, 5 responsáveis, 3 projetos, 4
+categorias, 4 etiquetas, 5 tarefas e os itens delas (subtarefas, comentários e horas
+apontadas). Para encher um banco vazio com eles:
 
 ```powershell
 python manage.py loaddata exemplos
@@ -41,6 +42,10 @@ As tarefas de exemplo cobrem os três estados (pendente, atrasada e concluída) 
 responsáveis está sem e-mail de propósito, para você ver como o comando de lembretes
 ignora esse caso. Os prazos são datas fixas de setembro/outubro de 2026 — com o tempo
 todas vão aparecer como atrasadas; é só editar o JSON quando isso incomodar.
+
+A fixture **não traz anexos**: eles dependeriam de arquivos de verdade em `MEDIA_ROOT`, que
+não têm por que ir para o Git. Para ver a tela de anexos funcionando, envie um arquivo
+qualquer na página de uma tarefa.
 
 ---
 
@@ -54,12 +59,14 @@ duas pastas com nomes parecidos, e vale não confundir:
 | `Suap2/manage.py` | Porta de entrada de todo comando (`runserver`, `migrate`, `test`…) |
 | `Suap2/Suap2/settings.py` | Configuração: banco, idioma, fuso, e-mail, login |
 | `Suap2/Suap2/urls.py` | Todas as rotas do site (não há `urls.py` dentro do app) |
-| `Suap2/Suap2APP/models.py` | As duas tabelas: `Responsavel` e `Tarefa` |
+| `Suap2/Suap2APP/models.py` | As dez tabelas (veja a seção 2) |
 | `Suap2/Suap2APP/views.py` | A lógica de cada tela |
 | `Suap2/Suap2APP/forms.py` | Formulários de cadastro e o formulário de filtros |
 | `Suap2/Suap2APP/admin.py` | Como as tabelas aparecem no `/admin` |
 | `Suap2/Suap2APP/templates/Suap2APP/` | O HTML |
 | `Suap2/Suap2APP/static/Suap2APP/style.css` | Todo o CSS (arquivo único, sem framework) |
+| `Suap2/Suap2APP/fixtures/exemplos.json` | Dados de exemplo (`loaddata exemplos`) |
+| `Suap2/media/` | Os anexos enviados; fora do Git |
 | `Suap2/Suap2APP/management/commands/enviar_lembretes.py` | Comando de e-mail |
 | `Suap2/Suap2APP/migrations/` | Histórico de mudanças no banco |
 | `Suap2/Suap2APP/tests.py` | Os testes automatizados |
@@ -75,11 +82,43 @@ Configurações que merecem atenção em `settings.py`:
 
 ---
 
-## 2. Os dois modelos (`Suap2APP/models.py`)
+## 2. Os dez modelos (`Suap2APP/models.py`)
+
+`Tarefa` é o centro de tudo. Os outros nove existem em três papéis diferentes, e **essa
+distinção explica o desenho de quase todo o resto do projeto**:
+
+| Papel | Modelos | Como se ligam à tarefa | Tela própria? |
+|---|---|---|---|
+| Quem faz | `Departamento`, `Responsavel` | `Tarefa.pessoa_responsavel` (PROTECT) | sim, menu "Responsáveis" e "Cadastros" |
+| Como classificar | `Projeto`, `Categoria`, `Etiqueta` | FK ou M2M, todos opcionais | sim, menu "Projetos" e "Cadastros" |
+| O que vive dentro | `Subtarefa`, `Comentario`, `Anexo`, `RegistroTempo` | FK obrigatória para `Tarefa`, com CASCADE | não: aparecem na tela da tarefa |
+
+Os quatro "de dentro" não têm menu nem CRUD separado de propósito — uma página listando
+todos os comentários do sistema não serviria para nada. Eles nascem e morrem na tela da
+tarefa (`TarefaDetailView`, seção 3).
+
+Um resumo dos relacionamentos:
+
+```
+Departamento ──< Responsavel ──< Tarefa >── Projeto ──> Departamento
+                      │            │  │
+                      │            │  └── Categoria
+                      │            │  └──< Etiqueta (muitos para muitos)
+                      │            │
+                      │            ├──< Subtarefa
+                      │            ├──< Comentario >── Responsavel (autor, opcional)
+                      │            ├──< Anexo
+                      └────────────┴──< RegistroTempo
+```
+
+### `Departamento`
+
+Campos: `nome` (único), `sigla`. Agrupa responsáveis e projetos. O `__str__` junta os dois
+(`Coordenação de Informática (CINF)`), e omite o parêntese quando não há sigla.
 
 ### `Responsavel`
 
-Campos: `nome`, `cpf`, `email`, `telefone`.
+Campos: `nome`, `cpf`, `email`, `telefone`, `departamento`.
 
 O `cpf` é `unique=True` — não pode haver dois responsáveis com o mesmo CPF. Isso só
 funciona de verdade porque o formulário normaliza o CPF antes de salvar (veja a seção 4);
@@ -88,10 +127,48 @@ sem isso, `52998224725` e `529.982.247-25` entrariam como duas pessoas diferente
 `Meta.ordering = ['nome']` faz a lista de responsáveis já sair em ordem alfabética sem
 nenhum `order_by()` nas views.
 
+`departamento` é `null=True, blank=True` com `on_delete=SET_NULL`: excluir um departamento
+**não** apaga ninguém, só deixa os cadastros sem departamento.
+
+### `Projeto`
+
+Campos: `nome` (único), `descricao`, `departamento`, `inicio`, `fim`.
+
+As datas são opcionais, mas se as duas existirem o fim não pode ser antes do início. Essa
+regra está escrita **duas vezes**, de propósito:
+
+```python
+constraints = [
+    models.CheckConstraint(
+        condition=(Q(inicio__isnull=True) | Q(fim__isnull=True) | Q(fim__gte=F('inicio'))),
+        name='projeto_fim_depois_do_inicio',
+    ),
+]
+```
+
+A `CheckConstraint` é a garantia final, no banco: vale até para quem cria projeto pelo
+shell ou pelo `/admin`. O `ProjetoForm.clean` (seção 4) repete a checagem só para virar uma
+mensagem de erro bonita no formulário, em vez de um `IntegrityError` na tela. Há um teste
+para cada um dos dois caminhos.
+
+`encerrado` é uma `@property`, não um campo: `fim` no passado. Não faz sentido guardar no
+banco algo que muda de valor sozinho com o passar do tempo.
+
+### `Categoria` e `Etiqueta`
+
+São os dois jeitos de classificar uma tarefa, e a diferença é intencional:
+
+- **`Categoria`** é FK: cada tarefa tem *no máximo uma*. Tem `nome` e `cor` (com
+  `choices`), e a cor vira a classe CSS `cor-azul`, `cor-verde`… no template.
+- **`Etiqueta`** é M2M: cada tarefa pode ter *várias*. Só tem `nome`.
+
+Excluir uma categoria ou etiqueta nunca apaga tarefa: a FK é `SET_NULL` e o M2M só perde a
+linha de ligação.
+
 ### `Tarefa`
 
 Campos: `titulo`, `criada_em`, `prazo`, `concluida_em`, `lembrete_enviado_em`,
-`pessoa_responsavel`.
+`pessoa_responsavel`, `projeto`, `categoria`, `etiquetas`.
 
 Três decisões importantes:
 
@@ -116,6 +193,66 @@ responsável que ainda tem tarefas. Esse erro é tratado na view (seção 3).
 o comando de e-mail (marca a data ao enviar) e o `TarefaForm.save` (zera quando o prazo
 muda).
 
+#### `TarefaQuerySet.com_relacionados()`
+
+`Tarefa.objects` não é o manager padrão: vem de um `QuerySet` próprio com um método só.
+
+```python
+def com_relacionados(self):
+    return self.select_related('pessoa_responsavel', 'projeto', 'categoria').prefetch_related(
+        'etiquetas', 'subtarefas',
+    )
+```
+
+É exatamente o que `_tarefa_item.html` precisa para desenhar um card. Como o mesmo parcial
+aparece em quatro telas (lista, painel, responsável e projeto), o método evita repetir a
+lista de relacionamentos — e evita esquecer um deles em uma tela e fazer uma consulta por
+tarefa. Como está no manager, também funciona nas relações inversas:
+`responsavel.tarefa_set.com_relacionados()`.
+
+#### `progresso` e `horas_registradas`
+
+As duas são `@property` e **percorrem `self.subtarefas.all()` / `self.registros_tempo.all()`
+em Python**, em vez de chamar `.count()` ou `.aggregate()`. É de propósito: `all()`
+aproveita o `prefetch_related` que a view já fez, enquanto `count()` daria uma consulta
+nova para cada tarefa da lista. `progresso` devolve `None` quando não há subtarefa — que é
+diferente de `0`, ou seja "tem checklist e nada foi feito".
+
+### `Subtarefa`, `Comentario`, `Anexo` e `RegistroTempo`
+
+Os quatro têm uma FK obrigatória para `Tarefa` com `on_delete=CASCADE`: excluir a tarefa
+leva tudo embora junto (a tela de confirmação avisa quantos itens vão). E os quatro têm
+`Meta.ordering`, então nenhuma view precisa ordená-los.
+
+- **`Subtarefa`** — `descricao`, `concluida`, `ordem`. O `save()` dá a `ordem` seguinte
+  para um item novo (`Max('ordem') + 1`), então a lista respeita a ordem de criação sem
+  ninguém digitar número nenhum.
+- **`Comentario`** — `autor` (opcional), `texto`, `criado_em`. O autor é `SET_NULL`: se o
+  responsável for excluído um dia, o comentário fica como "Anônimo" em vez de desaparecer.
+- **`Anexo`** — `arquivo` (`FileField`), `descricao`, `enviado_em`. Veja o cuidado com o
+  arquivo em disco logo abaixo.
+- **`RegistroTempo`** — `responsavel`, `horas`, `data`, `observacao`. As horas são
+  `DecimalField` (dinheiro e hora não se guardam em `float`) com mínimo de 0,25 h. O
+  `responsavel` aqui é **PROTECT**, igual ao da tarefa: quem já apontou hora não pode ser
+  excluído. `data` usa `default=timezone.localdate` — a *função*, sem parênteses, senão
+  todos os registros nasceriam com a data em que o servidor subiu.
+
+#### O sinal que apaga o arquivo do anexo
+
+Quando você apaga um `Anexo`, o Django tira a linha do banco e **deixa o arquivo em
+`MEDIA_ROOT`** — lixo acumulando para sempre. Daí o `post_delete`:
+
+```python
+@receiver(post_delete, sender=Anexo)
+def apagar_arquivo_do_anexo(sender, instance, **kwargs):
+    if instance.arquivo:
+        instance.arquivo.delete(save=False)
+```
+
+Um sinal, e não um `delete()` sobrescrito, porque `Model.delete()` **não é chamado** na
+exclusão em cascata nem em `queryset.delete()`. Com o sinal, apagar a tarefa inteira também
+limpa os arquivos dela. Há um teste para os dois caminhos.
+
 ---
 
 ## 3. As views (`Suap2APP/views.py`)
@@ -126,29 +263,95 @@ classe é curta: ela só declara *qual modelo*, *qual formulário* e *para onde 
 ### A hierarquia de mixins
 
 ```
-FormularioMixin              (views.py:17)  login + mensagem de sucesso + template form.html
-├── TarefaFormularioMixin                   modelo Tarefa, TarefaForm, volta pra lista
-│   ├── TarefaCreateView                    só muda titulo_pagina e success_message
+FormularioMixin                    login + mensagem de sucesso + template form.html
+├── TarefaFormularioMixin          modelo Tarefa, TarefaForm, volta pra lista
+│   ├── TarefaCreateView           só muda titulo_pagina e success_message
 │   └── TarefaUpdateView
-└── ResponsavelFormularioMixin              modelo Responsavel, ResponsavelForm
-    ├── ResponsavelCreateView
-    └── ResponsavelUpdateView
+├── ResponsavelFormularioMixin     modelo Responsavel, ResponsavelForm
+│   ├── ResponsavelCreateView
+│   └── ResponsavelUpdateView
+├── DepartamentoFormularioMixin    ┐
+├── ProjetoFormularioMixin         │ mesma receita para os quatro
+├── CategoriaFormularioMixin       │ cadastros auxiliares
+└── EtiquetaFormularioMixin        ┘
+
+ExclusaoMixin                      login + mensagem + template confirm_delete.html
+├── DepartamentoDeleteView         cada uma só diz o título, a mensagem e o aviso
+├── ProjetoDeleteView
+├── CategoriaDeleteView
+└── EtiquetaDeleteView
 ```
 
 Criar e editar usam **o mesmo template** (`form.html`); a diferença é só o título da
 página e a mensagem exibida no fim. Todo formulário é renderizado em um laço genérico
 `{% for field in form %}`, então **um campo novo no form aparece sozinho na tela**.
 
+`ExclusaoMixin` é o irmão do `FormularioMixin` para as telas de excluir dos quatro
+cadastros auxiliares. Cada subclasse preenche três atributos e, se quiser, o método
+`contar_relacionados()`; o mixin transforma o número em um aviso do tipo "esta categoria
+está em 3 tarefa(s). Nenhuma será apagada". `Tarefa` e `Responsavel` **não** usam esse
+mixin: as duas têm template próprio, porque o texto delas é mais específico (a de
+responsável precisa esconder o botão quando o PROTECT vai barrar a exclusão).
+
 ### `TarefaListView`
 
 - `get_queryset()` guarda `self.agora` e `self.filtro` em atributos, para reaproveitá-los
   em `get_context_data()` sem recalcular.
-- `select_related('pessoa_responsavel')` traz o responsável na mesma consulta. Sem isso,
-  uma lista de 10 tarefas faria 10 consultas extras. Existe um teste que crava esse número
-  (`tests.py:65`): se ele quebrar com "esperava 5 queries", provavelmente algum
-  `select_related` se perdeu.
+- `com_relacionados()` (seção 2) traz responsável, projeto e categoria na mesma consulta e
+  faz o *prefetch* de etiquetas e subtarefas. Sem isso, uma lista de 10 tarefas faria
+  dezenas de consultas extras. Existe um teste que crava o número: se ele quebrar com
+  "esperava 10 queries", provavelmente algum relacionamento se perdeu no caminho.
 - `now` vai para o template para marcar as tarefas atrasadas; `filtrando` diz se algum
   filtro está ativo (muda a mensagem de lista vazia e mostra o botão "Limpar").
+
+### `TarefaDetailView` — a tela com quatro formulários
+
+É a view mais incomum do projeto, porque uma única página cria quatro tipos de item
+diferentes. A saída foi um dicionário no alto da classe:
+
+```python
+FORMULARIOS = {
+    'subtarefa': (SubtarefaForm, 'Subtarefa adicionada.'),
+    'comentario': (ComentarioForm, 'Comentário adicionado.'),
+    'anexo': (AnexoForm, 'Anexo enviado.'),
+    'registro': (RegistroTempoForm, 'Tempo registrado.'),
+}
+```
+
+- **No GET**, `get_context_data` põe os quatro formulários vazios no contexto, com os nomes
+  `form_subtarefa`, `form_comentario`… O `setdefault` é a parte importante: se alguém já
+  colocou um formulário ali (o caso do POST inválido, abaixo), ele não é substituído.
+- **No POST**, o campo escondido `acao` diz qual dos quatro foi enviado. O formulário certo
+  é montado, o `tarefa` é preenchido pela view (por isso nenhum dos quatro tem esse campo)
+  e, se valer, salva e redireciona.
+- **Se o formulário for inválido**, a view **re-renderiza a própria página** com aquele
+  formulário preenchido no contexto. É o motivo de os quatro morarem na mesma URL: assim o
+  erro aparece embaixo do campo errado, e não como uma mensagem solta no topo.
+- Um `acao` que não está no dicionário devolve 404 — ninguém chega nesse caminho pela tela.
+
+### `item_delete` e `subtarefa_toggle`
+
+Excluir um dos quatro itens é sempre a mesma coisa: achar pelo `pk`, apagar e voltar para a
+tarefa. Em vez de quatro views iguais, existe uma, e o tipo vem na URL
+(`/itens/comentario/3/excluir/`):
+
+```python
+TIPOS_DE_ITEM = {
+    'subtarefa': (Subtarefa, 'Subtarefa excluída.'),
+    ...
+}
+```
+
+Tipo fora do dicionário é 404, então a URL aberta não dá acesso a nenhum outro modelo do
+projeto. As duas views são `@require_POST`, pela mesma razão do `tarefa_toggle`: mudam
+dados. E as duas redirecionam para a tarefa, não para a lista.
+
+### `ProjetoDetailView`
+
+É a gêmea da `ResponsavelDetailView`: mesmos três contadores em uma consulta só, mesma
+lista de tarefas com o parcial. A diferença é o total de horas, que não sai das tarefas mas
+de `RegistroTempo.objects.filter(tarefa__projeto=...)` — atravessa duas tabelas em uma
+consulta.
 
 ### `tarefa_toggle` (`views.py:78`)
 
@@ -180,12 +383,39 @@ separados.
 
 ## 4. Os formulários (`Suap2APP/forms.py`)
 
+### `DataInput` e `DataHoraInput`
+
+Os dois widgets no topo do arquivo são os seletores nativos do navegador
+(`type="date"` e `type="datetime-local"`). Eles só falam **ISO** (`2030-01-01`,
+`2030-01-01T10:00`), enquanto o projeto está em pt-br e formata datas como `01/01/2030`.
+São necessárias duas peças em lugares diferentes:
+
+| Peça | Onde fica | Para quê |
+|---|---|---|
+| `format` | no widget | **Escrever** o valor no HTML. Sem ele o campo aparece vazio no navegador, porque `01/01/2030` não é uma data válida para um `<input type="date">`. |
+| `input_formats` | no campo do form | **Ler** o que o navegador mandou. Sem ele o Django recusa uma data válida. |
+
+E há uma pegadinha que custou um bug: **não basta declarar `format` como atributo de
+classe**, porque `DateTimeBaseInput.__init__` sobrescreve `self.format` com `format or
+None`. Daí o formato ser passado como valor padrão do `__init__`:
+
+```python
+class DataInput(forms.DateInput):
+    input_type = 'date'
+
+    def __init__(self, attrs=None, format='%Y-%m-%d'):
+        super().__init__(attrs, format)
+```
+
+`WidgetsDeDataTests`, em `tests.py`, confere que os três campos de data do projeto saem em
+ISO no HTML — é o teste que pega esse erro de volta.
+
 ### `TarefaForm`
 
-O widget do prazo é `type="datetime-local"`, o seletor de data nativo do navegador. Ele
-envia a data no formato `2030-01-01T10:00`, que o Django não aceita por padrão — daí as
-duas linhas de `format` e `input_formats`. Se você tirar uma delas, o campo passa a
-recusar datas válidas.
+Os campos `projeto` e `categoria` são opcionais e recebem um `empty_label` em português
+("Sem projeto", "Sem categoria"). `etiquetas` usa `CheckboxSelectMultiple`: com poucas
+etiquetas, caixinhas são mais claras que um `<select multiple>`, onde é preciso saber que
+se seleciona vários com Ctrl.
 
 O `save()` é sobrescrito por um motivo só:
 
@@ -198,12 +428,29 @@ Prazo novo merece lembrete novo. Mudar só o título mantém o lembrete já envi
 
 ### `TarefaFiltroForm`
 
-Não é um `ModelForm` — é um formulário comum, com três campos opcionais (`q`, `status`,
-`responsavel`), que existe para duas coisas ao mesmo tempo: **desenhar a barra de filtros**
-e **filtrar o queryset**, no método `filtrar(tarefas, agora)`.
+Não é um `ModelForm` — é um formulário comum, com seis campos opcionais (`q`, `status`,
+`responsavel`, `projeto`, `categoria`, `etiqueta`), que existe para duas coisas ao mesmo
+tempo: **desenhar a barra de filtros** e **filtrar o queryset**, no método
+`filtrar(tarefas, agora)`.
 
 Se o formulário for inválido (alguém digitou `?status=xyz` na URL), ele devolve a lista
-inteira em vez de dar erro — decisão deliberada, com teste em `tests.py:206`.
+inteira em vez de dar erro — decisão deliberada, com teste.
+
+O `tarefa_list.html` desenha a barra em um laço `{% for campo in filtro %}` (com o `q`
+fora, porque ele ocupa a linha inteira). Ou seja: **um filtro novo só precisa do campo e do
+`if` dentro de `filtrar()`** — ele aparece na tela sozinho.
+
+### Os quatro formulários dos itens da tarefa
+
+`SubtarefaForm`, `ComentarioForm`, `AnexoForm` e `RegistroTempoForm` não têm o campo
+`tarefa`: quem preenche é a `TarefaDetailView` (seção 3). O `AnexoForm` também tem um
+`clean_arquivo` que recusa arquivo acima de 10 MB — sem ele, qualquer upload entraria.
+
+### `ProjetoForm.clean`
+
+Repete no formulário a regra que a `CheckConstraint` já garante no banco (seção 2). Sem
+esse `clean`, salvar um projeto com o fim antes do início daria um `IntegrityError` — uma
+página de erro 500 em vez de uma mensagem em vermelho no formulário.
 
 ### `ResponsavelForm.clean_cpf`
 
@@ -223,30 +470,50 @@ Faz duas coisas:
 | URL | View | Nome (usado em `{% url %}` e `reverse()`) |
 |---|---|---|
 | `/` | `TarefaListView` | `tarefa_list` |
+| `/painel/` | `PainelView` | `painel` |
 | `/tarefas/nova/` | `TarefaCreateView` | `tarefa_create` |
+| `/tarefas/<pk>/` | `TarefaDetailView` | `tarefa_detail` |
 | `/tarefas/<pk>/editar/` | `TarefaUpdateView` | `tarefa_update` |
 | `/tarefas/<pk>/excluir/` | `TarefaDeleteView` | `tarefa_delete` |
 | `/tarefas/<pk>/concluir/` | `tarefa_toggle` (só POST) | `tarefa_toggle` |
-| `/responsaveis/` | `ResponsavelListView` | `responsavel_list` |
-| `/responsaveis/novo/` | `ResponsavelCreateView` | `responsavel_create` |
-| `/responsaveis/<pk>/` | `ResponsavelDetailView` | `responsavel_detail` |
-| `/responsaveis/<pk>/editar/` | `ResponsavelUpdateView` | `responsavel_update` |
-| `/responsaveis/<pk>/excluir/` | `ResponsavelDeleteView` | `responsavel_delete` |
+| `/subtarefas/<pk>/concluir/` | `subtarefa_toggle` (só POST) | `subtarefa_toggle` |
+| `/itens/<tipo>/<pk>/excluir/` | `item_delete` (só POST) | `item_delete` |
+| `/responsaveis/…` | as cinco views de `Responsavel` | `responsavel_list`, `_create`, `_detail`, `_update`, `_delete` |
+| `/projetos/…` | as cinco views de `Projeto` | `projeto_list`, `_create`, `_detail`, `_update`, `_delete` |
+| `/departamentos/…` | as quatro views de `Departamento` | `departamento_list`, `_create`, `_update`, `_delete` |
+| `/categorias/…` | as quatro views de `Categoria` | `categoria_list`, `_create`, `_update`, `_delete` |
+| `/etiquetas/…` | as quatro views de `Etiqueta` | `etiqueta_list`, `_create`, `_update`, `_delete` |
+| `/media/…` | os anexos, **só com `DEBUG=1`** | — |
 | `/entrar/` e `/sair/` | views prontas do Django | `login` e `logout` |
 | `/admin/` | admin do Django | — |
 
 Sempre use o **nome** da rota, nunca o endereço escrito à mão: assim, mudar a URL não
 quebra nada.
 
+`Departamento`, `Categoria` e `Etiqueta` não têm rota de detalhe: a lista já mostra tudo o
+que existe para mostrar, e o número de tarefas em cada uma é um link para a lista de
+tarefas já filtrada.
+
+A última linha do arquivo serve os anexos no `runserver`. Em produção (`DEBUG=0`) quem faz
+isso é o servidor web; o Django nem registra a rota.
+
 ### Templates
 
 - `base.html` — o esqueleto: menu (só para quem está logado) e as mensagens de sucesso.
   Todos os outros templates fazem `{% extends %}` dele.
 - `_tarefa_item.html` — um card de tarefa. O underline no nome indica que é um *parcial*,
-  incluído por outros templates. É usado na lista de tarefas (com
-  `{% include ... with mostrar_responsavel=True %}`) e na página do responsável (sem a
-  flag, porque ali o responsável já é óbvio).
-- `form.html` — serve para criar **e** editar, tarefa **e** responsável.
+  incluído por outros templates. Aparece em quatro telas, e as flags do `{% include %}`
+  dizem o que esconder: `mostrar_responsavel=True` na lista e no painel,
+  `esconder_projeto=True` na página do projeto (onde repetir o nome do projeto em cada card
+  seria ruído) e nenhuma flag na página do responsável.
+- `_form_item.html` — um dos quatro formulários de adicionar item na tela da tarefa. Recebe
+  `form`, `acao` (o valor do campo escondido lido pela view), `rotulo` do botão e
+  `arquivo=True` quando precisa de `enctype="multipart/form-data"` — sem esse `enctype` o
+  upload chega vazio.
+- `_item_excluir.html` — o botãozinho de excluir um item; recebe `tipo` e `pk`.
+- `form.html` — serve para criar **e** editar, nos seis cadastros.
+- `confirm_delete.html` — a tela de excluir dos quatro cadastros auxiliares, usada pelo
+  `ExclusaoMixin`. `Tarefa` e `Responsavel` têm as suas próprias.
 - Na paginação (`tarefa_list.html:42`), a tag `{% querystring page=... %}` reaproveita os
   parâmetros da URL atual e só troca a página — é o que impede os filtros de sumirem ao
   clicar em "Próxima".
@@ -295,7 +562,12 @@ terminal. Para enviar de verdade, veja a tabela de variáveis no README.
 | O que você quer | Onde mexer |
 |---|---|
 | Adicionar um campo na tarefa | `models.py` → `python manage.py makemigrations` → `fields` do `TarefaForm` → `_tarefa_item.html` → `admin.py` |
-| Novo filtro na lista | `TarefaFiltroForm`: cria o campo **e** o `if` correspondente em `filtrar()` → mostra o campo em `tarefa_list.html` |
+| Novo filtro na lista | `TarefaFiltroForm`: cria o campo **e** o `if` correspondente em `filtrar()`. A barra de filtros se desenha sozinha |
+| Novo cadastro auxiliar (como Categoria) | modelo → migração → form → `FormularioMixin` + `ExclusaoMixin` em `views.py` → 4 rotas → um `_list.html` → link em `base.html` → `admin.py` |
+| Novo tipo de item dentro da tarefa | modelo com FK CASCADE → form sem o campo `tarefa` → uma linha em `TarefaDetailView.FORMULARIOS` e outra em `TIPOS_DE_ITEM` → um bloco em `tarefa_detail.html` |
+| Nova cor de categoria | `Categoria.CORES` **e** a classe `.cor-<nome>` no `style.css` |
+| Mudar o limite de tamanho do anexo | `TAMANHO_MAXIMO_ANEXO` em `forms.py` |
+| Mudar onde os anexos são guardados | `MEDIA_ROOT` em `settings.py`, ou o `upload_to` do `Anexo` |
 | Mudar a ordem da lista | `Meta.ordering` em `models.py` |
 | Mudar quantas tarefas por página | `paginate_by` em `TarefaListView` |
 | Mudar texto/assunto do e-mail | método `enviar()` do comando `enviar_lembretes` |
@@ -335,6 +607,29 @@ esperado do sistema:
 | `FiltroTarefaTests` | Busca, situação, responsável, filtros combinados, paginação e o retorno do "Concluir" |
 | `ResponsavelDetailTests` | Contadores corretos e sem vazar tarefa de outra pessoa |
 | `EnviarLembretesTests` | Agrupamento por pessoa, o que é ignorado, não enviar duas vezes, `--horas` e `--dry-run` |
+| `DepartamentoTests` | Cadastro, contagem na lista, e que excluir só desliga os ligados |
+| `ProjetoTests` | Cadastro, fim antes do início barrado nos **dois** níveis, contadores, horas, `encerrado` |
+| `CategoriaTests` / `EtiquetaTests` | Cadastro, contagem, e que excluir não apaga tarefa |
+| `TarefaComRelacionamentosTests` | Criar tarefa com projeto, categoria e etiquetas; aparecem na lista |
+| `FiltroPorRelacionamentoTests` | Os três filtros novos, inclusive combinados com a situação |
+| `SubtarefaTests` | `ordem` automática, `progresso`, marcar/desmarcar, exigir POST |
+| `TarefaDetalheTests` | Os quatro formulários, erro que reaparece no campo, excluir item, CASCADE, número de consultas |
+| `AnexoTests` | Upload, limite de tamanho, e o arquivo saindo do disco nos dois caminhos |
+| `RegistroTempoProtegidoTests` | PROTECT nas horas apontadas e a soma na página do responsável |
+| `PainelDosNovosModelosTests` | Agrupamento por projeto e por categoria no painel |
+| `WidgetsDeDataTests` | Os campos de data saem em ISO no HTML (veja a seção 4) |
+| `FixtureDeExemploTests` | O `loaddata exemplos` funciona e cobre os modelos |
+| `TodasAsPaginasAbremTests` | Passeia por **todas** as telas com os dados de exemplo e cobra HTTP 200 |
 
 `BaseTestCase` no topo do arquivo cria um usuário e um responsável e já faz o login — é
 dele que a maioria das classes herda, junto com o atalho `criar_tarefa()`.
+
+Vale entender dois tipos de teste que se repetem:
+
+- **Os que cravam o número de consultas** (`assertNumQueries`) rodam a mesma página duas
+  vezes, com poucos e com muitos registros, e exigem o mesmo número. Eles não protegem um
+  número bonito: protegem o *formato* do código. Se alguém tirar um `select_related`, o
+  teste falha mesmo que a tela continue funcionando.
+- **`TodasAsPaginasAbremTests`** não confere conteúdo nenhum, só que cada tela responde
+  200 com os dados de exemplo. É uma rede de segurança barata: pega `{% url %}` com nome
+  errado, template que não existe e variável que faltou no contexto.

@@ -1,12 +1,37 @@
 [
   {
+    "model": "Suap2APP.departamento",
+    "pk": 1,
+    "fields": {
+      "nome": "Coordenação de Informática",
+      "sigla": "CINF"
+    }
+  },
+  {
+    "model": "Suap2APP.departamento",
+    "pk": 2,
+    "fields": {
+      "nome": "Departamento de Ensino",
+      "sigla": "DE"
+    }
+  },
+  {
+    "model": "Suap2APP.departamento",
+    "pk": 3,
+    "fields": {
+      "nome": "Administração",
+      "sigla": "ADM"
+    }
+  },
+  {
     "model": "Suap2APP.responsavel",
     "pk": 1,
     "fields": {
       "nome": "Ana Souza",
       "cpf": "529.982.247-25",
       "email": "ana.souza@exemplo.com",
-      "telefone": "(65) 99801-1122"
+      "telefone": "(65) 99801-1122",
+      "departamento": 3
     }
   },
   {
@@ -16,7 +41,8 @@
       "nome": "Bruno Lima",
       "cpf": "111.444.777-35",
       "email": "bruno.lima@exemplo.com",
-      "telefone": "(65) 99802-3344"
+      "telefone": "(65) 99802-3344",
+      "departamento": 1
     }
   },
   {
@@ -26,7 +52,8 @@
       "nome": "Carla Mendes",
       "cpf": "390.533.447-05",
       "email": "carla.mendes@exemplo.com",
-      "telefone": "(65) 99803-5566"
+      "telefone": "(65) 99803-5566",
+      "departamento": 3
     }
   },
   {
@@ -36,7 +63,8 @@
       "nome": "Diego Rocha",
       "cpf": "168.995.554-68",
       "email": "diego.rocha@exemplo.com",
-      "telefone": "(65) 99804-7788"
+      "telefone": "(65) 99804-7788",
+      "departamento": 2
     }
   },
   {
@@ -46,7 +74,101 @@
       "nome": "Elisa Nunes",
       "cpf": "746.824.550-95",
       "email": "",
-      "telefone": "(65) 99805-9900"
+      "telefone": "(65) 99805-9900",
+      "departamento": 1
+    }
+  },
+  {
+    "model": "Suap2APP.projeto",
+    "pk": 1,
+    "fields": {
+      "nome": "Modernização do laboratório",
+      "descricao": "Trocar as máquinas e refazer a rede do laboratório 2.",
+      "departamento": 1,
+      "inicio": "2026-09-01",
+      "fim": "2026-12-20"
+    }
+  },
+  {
+    "model": "Suap2APP.projeto",
+    "pk": 2,
+    "fields": {
+      "nome": "Semana Acadêmica 2026",
+      "descricao": "Organização das palestras e oficinas.",
+      "departamento": 2,
+      "inicio": "2026-09-15",
+      "fim": "2026-10-30"
+    }
+  },
+  {
+    "model": "Suap2APP.projeto",
+    "pk": 3,
+    "fields": {
+      "nome": "Rotina administrativa",
+      "descricao": "Tarefas que se repetem todo mês.",
+      "departamento": 3,
+      "inicio": null,
+      "fim": null
+    }
+  },
+  {
+    "model": "Suap2APP.categoria",
+    "pk": 1,
+    "fields": {
+      "nome": "Administrativo",
+      "cor": "azul"
+    }
+  },
+  {
+    "model": "Suap2APP.categoria",
+    "pk": 2,
+    "fields": {
+      "nome": "Ensino",
+      "cor": "verde"
+    }
+  },
+  {
+    "model": "Suap2APP.categoria",
+    "pk": 3,
+    "fields": {
+      "nome": "Infraestrutura",
+      "cor": "amarelo"
+    }
+  },
+  {
+    "model": "Suap2APP.categoria",
+    "pk": 4,
+    "fields": {
+      "nome": "Financeiro",
+      "cor": "vermelho"
+    }
+  },
+  {
+    "model": "Suap2APP.etiqueta",
+    "pk": 1,
+    "fields": {
+      "nome": "urgente"
+    }
+  },
+  {
+    "model": "Suap2APP.etiqueta",
+    "pk": 2,
+    "fields": {
+      "nome": "mensal"
+    }
+  },
+  {
+    "model": "Suap2APP.etiqueta",
+    "pk": 3,
+    "fields": {
+      "nome": "fornecedor"
+    }
+  },
+  {
+    "model": "Suap2APP.etiqueta",
+    "pk": 4,
+    "fields": {
+      "nome": "sala-de-aula"
     }
   },
   {
@@ -58,7 +180,10 @@
       "prazo": "2026-09-19T21:00:00Z",
       "concluida_em": null,
       "lembrete_enviado_em": null,
-      "pessoa_responsavel": 1
+      "pessoa_responsavel": 1,
+      "projeto": 3,
+      "categoria": 1,
+      "etiquetas": [2]
     }
   },
   {
@@ -70,7 +195,10 @@
       "prazo": "2026-09-25T16:00:00Z",
       "concluida_em": null,
       "lembrete_enviado_em": null,
-      "pessoa_responsavel": 2
+      "pessoa_responsavel": 2,
+      "projeto": 1,
+      "categoria": 3,
+      "etiquetas": [1, 3]
     }
   },
   {
@@ -82,7 +210,10 @@
       "prazo": "2026-09-15T13:00:00Z",
       "concluida_em": null,
       "lembrete_enviado_em": null,
-      "pessoa_responsavel": 3
+      "pessoa_responsavel": 3,
+      "projeto": 3,
+      "categoria": 4,
+      "etiquetas": [2, 3]
     }
   },
   {
@@ -94,7 +225,10 @@
       "prazo": "2026-10-02T12:30:00Z",
       "concluida_em": null,
       "lembrete_enviado_em": null,
-      "pessoa_responsavel": 4
+      "pessoa_responsavel": 4,
+      "projeto": 2,
+      "categoria": 2,
+      "etiquetas": [4]
     }
   },
   {
@@ -106,7 +240,144 @@
       "prazo": "2026-09-12T22:00:00Z",
       "concluida_em": "2026-09-11T20:20:00Z",
       "lembrete_enviado_em": null,
-      "pessoa_responsavel": 5
+      "pessoa_responsavel": 5,
+      "projeto": 1,
+      "categoria": 3,
+      "etiquetas": []
+    }
+  },
+  {
+    "model": "Suap2APP.subtarefa",
+    "pk": 1,
+    "fields": {
+      "tarefa": 1,
+      "descricao": "Juntar os números de cada setor",
+      "concluida": true,
+      "ordem": 1
+    }
+  },
+  {
+    "model": "Suap2APP.subtarefa",
+    "pk": 2,
+    "fields": {
+      "tarefa": 1,
+      "descricao": "Escrever o texto do relatório",
+      "concluida": false,
+      "ordem": 2
+    }
+  },
+  {
+    "model": "Suap2APP.subtarefa",
+    "pk": 3,
+    "fields": {
+      "tarefa": 1,
+      "descricao": "Enviar para a direção",
+      "concluida": false,
+      "ordem": 3
+    }
+  },
+  {
+    "model": "Suap2APP.subtarefa",
+    "pk": 4,
+    "fields": {
+      "tarefa": 2,
+      "descricao": "Pedir três orçamentos",
+      "concluida": true,
+      "ordem": 1
+    }
+  },
+  {
+    "model": "Suap2APP.subtarefa",
+    "pk": 5,
+    "fields": {
+      "tarefa": 2,
+      "descricao": "Comparar os planos e escolher",
+      "concluida": false,
+      "ordem": 2
+    }
+  },
+  {
+    "model": "Suap2APP.comentario",
+    "pk": 1,
+    "fields": {
+      "tarefa": 1,
+      "autor": 1,
+      "texto": "Faltam os números da Coordenação de Informática.",
+      "criado_em": "2026-09-16T14:00:00Z"
+    }
+  },
+  {
+    "model": "Suap2APP.comentario",
+    "pk": 2,
+    "fields": {
+      "tarefa": 1,
+      "autor": 2,
+      "texto": "Mando os meus ainda hoje.",
+      "criado_em": "2026-09-16T17:30:00Z"
+    }
+  },
+  {
+    "model": "Suap2APP.comentario",
+    "pk": 3,
+    "fields": {
+      "tarefa": 2,
+      "autor": null,
+      "texto": "O contrato atual vence dia 30, não dá para esticar o prazo.",
+      "criado_em": "2026-09-17T12:15:00Z"
+    }
+  },
+  {
+    "model": "Suap2APP.comentario",
+    "pk": 4,
+    "fields": {
+      "tarefa": 3,
+      "autor": 3,
+      "texto": "Boleto já está em mãos.",
+      "criado_em": "2026-09-14T13:00:00Z"
+    }
+  },
+  {
+    "model": "Suap2APP.registrotempo",
+    "pk": 1,
+    "fields": {
+      "tarefa": 1,
+      "responsavel": 1,
+      "horas": "3.50",
+      "data": "2026-09-16",
+      "observacao": "Levantamento dos números"
+    }
+  },
+  {
+    "model": "Suap2APP.registrotempo",
+    "pk": 2,
+    "fields": {
+      "tarefa": 1,
+      "responsavel": 2,
+      "horas": "1.25",
+      "data": "2026-09-17",
+      "observacao": "Dados da CINF"
+    }
+  },
+  {
+    "model": "Suap2APP.registrotempo",
+    "pk": 3,
+    "fields": {
+      "tarefa": 2,
+      "responsavel": 2,
+      "horas": "2.00",
+      "data": "2026-09-17",
+      "observacao": "Reunião com o fornecedor"
+    }
+  },
+  {
+    "model": "Suap2APP.registrotempo",
+    "pk": 4,
+    "fields": {
+      "tarefa": 5,
+      "responsavel": 5,
+      "horas": "0.75",
+      "data": "2026-09-11",
+      "observacao": "Backup conferido"
     }
   }
 ]

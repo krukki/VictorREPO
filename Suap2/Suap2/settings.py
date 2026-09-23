@@ -121,6 +121,13 @@ STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 
+# Arquivos enviados pelos usuários (os anexos das tarefas)
+# https://docs.djangoproject.com/en/6.1/topics/files/
+
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+
 # Autenticação
 
 LOGIN_URL = 'login'

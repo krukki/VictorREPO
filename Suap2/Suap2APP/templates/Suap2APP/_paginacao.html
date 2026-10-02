@@ -1,0 +1,16 @@
+{% comment %}Paginação de uma ListView. O {% querystring %} mantém os filtros da URL ao trocar de página.{% endcomment %}
+{% if is_paginated %}
+    <nav class="paginacao" aria-label="Páginas">
+        {% if page_obj.has_previous %}
+            <a class="btn btn-secondary btn-small" href="{% querystring page=page_obj.previous_page_number %}" rel="prev">‹ Anterior</a>
+        {% else %}
+            <span class="btn btn-secondary btn-small" aria-disabled="true">‹ Anterior</span>
+        {% endif %}
+        <span class="paginacao-atual">Página <strong>{{ page_obj.number }}</strong> de {{ paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a class="btn btn-secondary btn-small" href="{% querystring page=page_obj.next_page_number %}" rel="next">Próxima ›</a>
+        {% else %}
+            <span class="btn btn-secondary btn-small" aria-disabled="true">Próxima ›</span>
+        {% endif %}
+    </nav>
+{% endif %}

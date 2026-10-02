@@ -70,7 +70,8 @@ duas pastas com nomes parecidos, e vale não confundir:
 | `Suap2/Suap2APP/forms.py` | Formulários de cadastro e o formulário de filtros |
 | `Suap2/Suap2APP/admin.py` | Como as tabelas aparecem no `/admin` |
 | `Suap2/Suap2APP/templates/Suap2APP/` | O HTML |
-| `Suap2/Suap2APP/static/Suap2APP/style.css` | Todo o CSS (arquivo único, sem framework) |
+| `Suap2/Suap2APP/static/Suap2APP/css/` | O CSS do tema, no estilo dos sites da era Windows Vista, sem framework: `tokens.css` (cores, raios, sombras), `base.css` (fundo azul com aurora, tipografia), `components.css` (botões, campos, cards…) e `pages.css` (layout de cada tela) |
+| `Suap2/Suap2APP/static/Suap2APP/js/aero.js` | O único JavaScript: o botão de fechar das mensagens. O site funciona sem ele |
 | `Suap2/Suap2APP/fixtures/exemplos.json` | Dados de exemplo (`loaddata exemplos`) |
 | `Suap2/media/` | Os anexos enviados; fora do Git |
 | `Suap2/Suap2APP/management/commands/enviar_lembretes.py` | Comando de e-mail |
@@ -522,8 +523,25 @@ isso é o servidor web; o Django nem registra a rota.
 
 ### Templates
 
-- `base.html` — o esqueleto: menu (só para quem está logado) e as mensagens de sucesso.
-  Todos os outros templates fazem `{% extends %}` dele.
+- `base.html` — o esqueleto. Todos os outros templates fazem `{% extends %}` dele e
+  preenchem os blocos `title`, `content` e, se precisarem, `body_class` (o login usa
+  `pagina-centro` para a janela estreita), `extra_css` e `extra_js`. Ele mesmo só junta
+  os parciais:
+  - `_topo.html` — o nome "Suap2" sobre o fundo azul e, para quem está logado, o
+    usuário, o Sair e a caixa de busca (ela só manda `?q=` para a lista de tarefas).
+  - `_navbar.html` — a barra preta do menu e a faixa clara dos cadastros, no alto da
+    janela, só para quem está logado. Marca o link da seção atual com
+    `aria-current` olhando o começo do nome da URL (`tarefa_detail` começa com `tarefa_`,
+    então acende "Tarefas").
+  - `_mensagens.html` — as mensagens do framework de *messages*, uma cor por tipo.
+  - `_icones.html` — um *sprite* SVG com todos os ícones, usados com
+    `<svg><use href="#i-nome"></use></svg>`.
+  - `_fundo.html` — o fundo azul com a aurora verde e ciano no topo, todo em CSS.
+  - `_rodape.html` — o rodapé.
+- `_campo.html` — um campo de formulário completo: rótulo, widget, ajuda e erros. Grupos
+  de caixas de seleção viram `<fieldset>` com `<legend>`. `form.html` e `_form_item.html`
+  usam este parcial em vez de repetir o HTML.
+- `_paginacao.html` — os botões de página de uma `ListView`.
 - `_tarefa_item.html` — um card de tarefa. O underline no nome indica que é um *parcial*,
   incluído por outros templates. Aparece em quatro telas, e as flags do `{% include %}`
   dizem o que esconder: `mostrar_responsavel=True` na lista e no painel,
@@ -537,7 +555,11 @@ isso é o servidor web; o Django nem registra a rota.
 - `form.html` — serve para criar **e** editar, nos seis cadastros.
 - `confirm_delete.html` — a tela de excluir dos quatro cadastros auxiliares, usada pelo
   `ExclusaoMixin`. `Tarefa` e `Responsavel` têm as suas próprias.
-- Na paginação (`tarefa_list.html:42`), a tag `{% querystring page=... %}` reaproveita os
+- `404.html` e `500.html` ficam em `templates/`, fora da pasta `Suap2APP/`, porque é ali
+  que o Django procura as páginas de erro. Elas só aparecem com `DEBUG=0`; com `DEBUG=1` o
+  Django mostra a página técnica de erro. O `500.html` não herda de `base.html` de
+  propósito: quando ele aparece, algo já quebrou, e ele é renderizado sem contexto.
+- Na paginação (`_paginacao.html`), a tag `{% querystring page=... %}` reaproveita os
   parâmetros da URL atual e só troca a página — é o que impede os filtros de sumirem ao
   clicar em "Próxima".
 
@@ -586,17 +608,21 @@ terminal. Para enviar de verdade, veja a tabela de variáveis no README.
 |---|---|
 | Adicionar um campo na tarefa | `models.py` → `python manage.py makemigrations` → `fields` do `TarefaForm` → `_tarefa_item.html` → `admin.py` |
 | Novo filtro na lista | `TarefaFiltroForm`: cria o campo **e** o `if` correspondente em `filtrar()`. A barra de filtros se desenha sozinha |
-| Novo cadastro auxiliar (como Categoria) | modelo → migração → form → `FormularioMixin` + `ExclusaoMixin` em `views.py` → 4 rotas → um `_list.html` → link em `base.html` → `admin.py` |
+| Novo cadastro auxiliar (como Categoria) | modelo → migração → form → `FormularioMixin` + `ExclusaoMixin` em `views.py` → 4 rotas → um `_list.html` → link em `_navbar.html` → `admin.py` |
 | Novo tipo de item dentro da tarefa | modelo com FK CASCADE → form sem o campo `tarefa` → uma linha em `TarefaDetailView.FORMULARIOS` e outra em `TIPOS_DE_ITEM` → um bloco em `tarefa_detail.html` |
-| Nova cor de categoria | `Categoria.CORES` **e** a classe `.cor-<nome>` no `style.css` |
+| Nova cor de categoria | `Categoria.CORES` **e** a classe `.cor-<nome>` em `css/components.css` |
 | Mudar o limite de tamanho do anexo | `TAMANHO_MAXIMO_ANEXO` em `forms.py` |
 | Mudar onde os anexos são guardados | `MEDIA_ROOT` em `settings.py`, ou o `upload_to` do `Anexo` |
 | Mudar a ordem da lista | `Meta.ordering` em `models.py` |
 | Mudar quantas tarefas por página | `paginate_by` em `TarefaListView` |
 | Mudar texto/assunto do e-mail | método `enviar()` do comando `enviar_lembretes` |
 | Mudar o prazo do lembrete | `--horas` na hora de rodar, ou o `default=24` em `add_arguments` |
-| Mudar cores, fontes, espaçamento | `static/Suap2APP/style.css` |
-| Mudar o menu | `templates/Suap2APP/base.html` |
+| Mudar cores, fontes, raios, sombras | as variáveis de `static/Suap2APP/css/tokens.css` |
+| Cores do fundo e da aurora | `--fundo-*` e `--aurora-*` em `tokens.css` |
+| Aurora mais lenta ou rápida | `--aurora-velocidade` em `tokens.css` (2 = metade da velocidade) |
+| Cores dos botões | as variáveis `--b1` a `--b4` de cada `.btn-*` em `css/components.css` |
+| Novo ícone | um `<symbol id="i-nome">` em `_icones.html` |
+| Mudar o menu | `templates/Suap2APP/_navbar.html` |
 | Nova página | view em `views.py` → rota em `Suap2/Suap2/urls.py` → template |
 | Mudar colunas/filtros do `/admin` | `admin.py` |
 

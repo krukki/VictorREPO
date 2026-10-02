@@ -3,42 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1B5C96">
     <title>{% block title %}Suap2 — Tarefas{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'Suap2APP/style.css' %}">
+    <link rel="stylesheet" href="{% static 'Suap2APP/css/tokens.css' %}">
+    <link rel="stylesheet" href="{% static 'Suap2APP/css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'Suap2APP/css/components.css' %}">
+    <link rel="stylesheet" href="{% static 'Suap2APP/css/pages.css' %}">
+    {% block extra_css %}{% endblock %}
 </head>
-<body>
-    <div class="card">
-        {% if user.is_authenticated %}
-            <nav>
-                <a href="{% url 'painel' %}">Painel</a>
-                <a href="{% url 'tarefa_list' %}">Tarefas</a>
-                <a href="{% url 'projeto_list' %}">Projetos</a>
-                <a href="{% url 'responsavel_list' %}">Responsáveis</a>
-                <div class="nav-usuario">
-                    <span>{{ user.get_username }}</span>
-                    <form method="post" action="{% url 'logout' %}">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-link">Sair</button>
-                    </form>
-                </div>
-                <div class="nav-cadastros">
-                    Cadastros:
-                    <a href="{% url 'departamento_list' %}">Departamentos</a>
-                    <a href="{% url 'categoria_list' %}">Categorias</a>
-                    <a href="{% url 'etiqueta_list' %}">Etiquetas</a>
-                </div>
-            </nav>
-        {% endif %}
+<body class="{% block body_class %}{% endblock %}">
+    {% include 'Suap2APP/_icones.html' %}
+    {% include 'Suap2APP/_fundo.html' %}
 
-        {% if messages %}
-            <ul class="mensagens">
-                {% for message in messages %}
-                    <li class="{{ message.tags }}">{{ message }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
+    <a class="pular" href="#conteudo">Pular para o conteúdo</a>
 
-        {% block content %}{% endblock %}
+    <div class="pagina">
+        {% include 'Suap2APP/_topo.html' %}
+
+        <div class="janela">
+            {% if user.is_authenticated %}
+                {% include 'Suap2APP/_navbar.html' %}
+            {% endif %}
+
+            <main id="conteudo" class="conteudo" tabindex="-1">
+                {% include 'Suap2APP/_mensagens.html' %}
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+
+        {% include 'Suap2APP/_rodape.html' %}
     </div>
+
+    <script src="{% static 'Suap2APP/js/aero.js' %}" defer></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

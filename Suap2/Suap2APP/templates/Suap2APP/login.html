@@ -2,21 +2,26 @@
 
 {% block title %}Entrar — Suap2{% endblock %}
 
+{% block body_class %}pagina-centro{% endblock %}
+
 {% block content %}
-    <h1>Entrar</h1>
+    <div class="destaque">
+        <h1>Entrar</h1>
+        <p>Suap2 · tarefas, projetos e responsáveis</p>
+    </div>
 
     <form method="post" class="formulario">
         {% csrf_token %}
 
         {% if form.errors %}
-            <div class="erro">Usuário ou senha incorretos.</div>
+            <p class="erro erro-geral" role="alert">Usuário ou senha incorretos.</p>
         {% endif %}
 
-        <div>
+        <div class="campo">
             <label for="{{ form.username.id_for_label }}">Usuário</label>
             {{ form.username }}
         </div>
-        <div>
+        <div class="campo">
             <label for="{{ form.password.id_for_label }}">Senha</label>
             {{ form.password }}
         </div>

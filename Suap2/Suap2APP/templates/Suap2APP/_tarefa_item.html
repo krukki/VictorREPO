@@ -1,4 +1,4 @@
-<div class="item">
+<div class="item item-tarefa{% if tarefa.concluida_em %} item-concluida{% elif tarefa.prazo < now %} item-atrasada{% endif %}">
     <div class="item-info">
         <div class="item-titulo{% if tarefa.concluida_em %} concluida{% endif %}">
             <a href="{% url 'tarefa_detail' tarefa.pk %}">{{ tarefa.titulo }}</a>
@@ -37,7 +37,7 @@
         <form method="post" action="{% url 'tarefa_toggle' tarefa.pk %}">
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ request.get_full_path }}">
-            <button type="submit" class="btn btn-secondary btn-small">
+            <button type="submit" class="btn {% if tarefa.concluida_em %}btn-secondary{% else %}btn-success{% endif %} btn-small">
                 {% if tarefa.concluida_em %}Reabrir{% else %}Concluir{% endif %}
             </button>
         </form>

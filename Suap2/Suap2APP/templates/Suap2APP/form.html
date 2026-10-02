@@ -16,17 +16,11 @@
         {% endif %}
 
         {% for error in form.non_field_errors %}
-            <div class="erro">{{ error }}</div>
+            <p class="erro erro-geral" role="alert">{{ error }}</p>
         {% endfor %}
 
         {% for field in form %}
-            <div>
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {{ field }}
-                {% for error in field.errors %}
-                    <div class="erro">{{ error }}</div>
-                {% endfor %}
-            </div>
+            {% include 'Suap2APP/_campo.html' %}
         {% endfor %}
 
         <div class="botoes">

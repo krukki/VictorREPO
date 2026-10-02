@@ -1,0 +1,73 @@
+{% comment %}
+Sprite de ícones SVG. Fica escondido no começo do <body> e cada ícone é usado com
+<svg><use href="#i-nome"></use></svg>. Os ícones de linha usam currentColor; os de
+mensagem são orbes com gradiente próprio.
+{% endcomment %}
+<svg xmlns="http://www.w3.org/2000/svg" class="sprite" aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden">
+    <defs>
+        <linearGradient id="g-reflexo" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#fff" stop-opacity="0.95"/>
+            <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+        </linearGradient>
+        <radialGradient id="g-orbe-verde" cx="0.5" cy="0.32" r="0.72">
+            <stop offset="0" stop-color="#D2F9BC"/>
+            <stop offset="0.55" stop-color="#5CC23A"/>
+            <stop offset="1" stop-color="#2E8B36"/>
+        </radialGradient>
+        <radialGradient id="g-orbe-azul" cx="0.5" cy="0.32" r="0.72">
+            <stop offset="0" stop-color="#C6EEFF"/>
+            <stop offset="0.55" stop-color="#29A3E5"/>
+            <stop offset="1" stop-color="#0B65A3"/>
+        </radialGradient>
+        <radialGradient id="g-orbe-amarelo" cx="0.5" cy="0.32" r="0.72">
+            <stop offset="0" stop-color="#FFF4C2"/>
+            <stop offset="0.55" stop-color="#FFC233"/>
+            <stop offset="1" stop-color="#E08A00"/>
+        </radialGradient>
+        <radialGradient id="g-orbe-vermelho" cx="0.5" cy="0.32" r="0.72">
+            <stop offset="0" stop-color="#FFD0D0"/>
+            <stop offset="0.55" stop-color="#EF5350"/>
+            <stop offset="1" stop-color="#B71C1C"/>
+        </radialGradient>
+    </defs>
+
+    <!-- Ícones de linha -->
+    <symbol id="i-predio" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16M15 9h4a1 1 0 0 1 1 1v11M3 21h18M8 8h3M8 12h3M8 16h3"/>
+    </symbol>
+    <symbol id="i-folha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15"/>
+        <path d="M5 19c3-4 6-7 10-9"/>
+    </symbol>
+    <symbol id="i-etiqueta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z"/>
+        <circle cx="7.5" cy="7.5" r="1.5"/>
+    </symbol>
+
+    <!-- Orbes das mensagens (success, info, warning, error, debug) -->
+    <symbol id="i-msg-success" viewBox="0 0 32 32">
+        <circle cx="16" cy="16" r="14" fill="url(#g-orbe-verde)"/>
+        <ellipse cx="16" cy="9.5" rx="9" ry="5" fill="url(#g-reflexo)"/>
+        <path d="M10 16.5l4 4 8-9" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="i-msg-info" viewBox="0 0 32 32">
+        <circle cx="16" cy="16" r="14" fill="url(#g-orbe-azul)"/>
+        <ellipse cx="16" cy="9.5" rx="9" ry="5" fill="url(#g-reflexo)"/>
+        <path d="M16 15v7" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="16" cy="10.5" r="1.8" fill="#fff"/>
+    </symbol>
+    <symbol id="i-msg-debug" viewBox="0 0 32 32">
+        <use href="#i-msg-info"/>
+    </symbol>
+    <symbol id="i-msg-warning" viewBox="0 0 32 32">
+        <circle cx="16" cy="16" r="14" fill="url(#g-orbe-amarelo)"/>
+        <ellipse cx="16" cy="9.5" rx="9" ry="5" fill="url(#g-reflexo)"/>
+        <path d="M16 9.5v8" fill="none" stroke="#6B4500" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="16" cy="22" r="1.8" fill="#6B4500"/>
+    </symbol>
+    <symbol id="i-msg-error" viewBox="0 0 32 32">
+        <circle cx="16" cy="16" r="14" fill="url(#g-orbe-vermelho)"/>
+        <ellipse cx="16" cy="9.5" rx="9" ry="5" fill="url(#g-reflexo)"/>
+        <path d="M11.5 11.5l9 9M20.5 11.5l-9 9" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+    </symbol>
+</svg>

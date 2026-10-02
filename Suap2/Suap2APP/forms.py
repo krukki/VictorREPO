@@ -106,7 +106,7 @@ class TarefaFiltroForm(forms.Form):
         empty_label='Todas',
     )
 
-    def filtrar(self, tarefas, agora):
+    def filtrar(self, tarefas, agora, com_status=True):
         if not self.is_valid():
             return tarefas
         dados = self.cleaned_data
@@ -120,6 +120,8 @@ class TarefaFiltroForm(forms.Form):
             tarefas = tarefas.filter(categoria=dados['categoria'])
         if dados['etiqueta']:
             tarefas = tarefas.filter(etiquetas=dados['etiqueta'])
+        if not com_status:
+            return tarefas
         if dados['status'] == 'pendentes':
             tarefas = tarefas.filter(concluida_em__isnull=True)
         elif dados['status'] == 'atrasadas':

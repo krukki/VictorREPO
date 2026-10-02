@@ -5,17 +5,23 @@ veja o [README.md](README.md).
 
 ---
 
-## 0. Antes de tudo: criar seu usuário
+## 0. Antes de tudo: entrar no sistema
 
-O banco (`Suap2/db.sqlite3`) começa vazio e **não existe nenhuma senha de admin
-pré-definida** — você cria a sua:
+O banco (`Suap2/db.sqlite3`) **vem junto com o repositório**, já migrado e com os dados
+de exemplo dentro. Ele traz um superusuário chamado `ronaldo`, mas **a senha dele não
+está em lugar nenhum** — o Django guarda só um hash. Então, ao clonar, você tem duas
+opções:
 
 ```powershell
 cd Suap2
-python manage.py migrate            # cria as tabelas
-python manage.py createsuperuser    # aqui você escolhe usuário e senha
+python manage.py changepassword ronaldo   # escolher uma senha para o usuário que já existe
+# ou
+python manage.py createsuperuser          # criar o seu próprio usuário
 python manage.py runserver
 ```
+
+Se o banco não existir (você apagou, ou está montando um do zero), rode
+`python manage.py migrate` antes — é ele que cria as tabelas.
 
 O mesmo usuário serve para o site (`http://127.0.0.1:8000/`) e para o `/admin`.
 
@@ -28,11 +34,11 @@ python manage.py changepassword <usuario>
 
 ### Dados de exemplo
 
-O banco em si (`db.sqlite3`) **não vai para o Git** — está no `.gitignore`, porque banco de
-dados não se versiona. O que está versionado é uma *fixture*: um arquivo JSON em
+O `db.sqlite3` é versionado (não está no `.gitignore`), então os dados de exemplo já estão
+lá quando você clona. Eles também existem como *fixture*: um arquivo JSON em
 `Suap2APP/fixtures/exemplos.json` com 3 departamentos, 5 responsáveis, 3 projetos, 4
 categorias, 4 etiquetas, 5 tarefas e os itens delas (subtarefas, comentários e horas
-apontadas). Para encher um banco vazio com eles:
+apontadas). Para recarregá-los em um banco vazio:
 
 ```powershell
 python manage.py loaddata exemplos
@@ -300,9 +306,17 @@ responsável precisa esconder o botão quando o PROTECT vai barrar a exclusão).
 - `com_relacionados()` (seção 2) traz responsável, projeto e categoria na mesma consulta e
   faz o *prefetch* de etiquetas e subtarefas. Sem isso, uma lista de 10 tarefas faria
   dezenas de consultas extras. Existe um teste que crava o número: se ele quebrar com
-  "esperava 10 queries", provavelmente algum relacionamento se perdeu no caminho.
+  "esperava 11 queries", provavelmente algum relacionamento se perdeu no caminho.
 - `now` vai para o template para marcar as tarefas atrasadas; `filtrando` diz se algum
   filtro está ativo (muda a mensagem de lista vazia e mostra o botão "Limpar").
+- **Os contadores do topo** (total, pendentes, atrasadas, concluídas) respeitam a busca e
+  os outros filtros, mas **ignoram a situação**. Por isso a view chama
+  `filtro.filtrar(..., com_status=False)`: se o filtro de situação entrasse na conta,
+  escolher "Concluídas" zeraria os outros contadores. Assim cada contador funciona como uma
+  aba: o link troca só o `status` (com `{% querystring status='...' page=None %}`, que mantém
+  os outros filtros e volta para a página 1), e `status_atual` destaca a aba ativa.
+  `total` é `pendentes + concluidas`, porque toda tarefa está em uma das duas (as atrasadas
+  são pendentes).
 
 ### `TarefaDetailView` — a tela com quatro formulários
 
@@ -348,12 +362,20 @@ dados. E as duas redirecionam para a tarefa, não para a lista.
 
 ### `ProjetoDetailView`
 
-É a gêmea da `ResponsavelDetailView`: mesmos três contadores em uma consulta só, mesma
+É a gêmea da `ResponsavelDetailView`: mesmos três contadores de `contar_por_situacao`, mesma
 lista de tarefas com o parcial. A diferença é o total de horas, que não sai das tarefas mas
 de `RegistroTempo.objects.filter(tarefa__projeto=...)` — atravessa duas tabelas em uma
 consulta.
 
-### `tarefa_toggle` (`views.py:78`)
+### `contar_por_situacao` (`views.py:116`)
+
+Os contadores saem de **uma única** consulta, usando `Count('pk', filter=Q(...))` dentro de
+um `aggregate`, em vez de três `count()` separados. A função recebe qualquer queryset de
+tarefas, então serve para todas as telas com esses três contadores: a lista principal e as
+páginas do responsável e do projeto. O painel tem a própria consulta, porque conta também
+o que vence e o que foi concluído na semana.
+
+### `tarefa_toggle` (`views.py:234`)
 
 É a única view escrita como função, porque é uma ação e não uma tela. Dois cuidados:
 
@@ -367,9 +389,8 @@ consulta.
 
 ### `ResponsavelDetailView`
 
-Os três contadores (pendentes, atrasadas, concluídas) saem de **uma única** consulta,
-usando `Count('pk', filter=Q(...))` dentro de um `aggregate`, em vez de três `count()`
-separados.
+Os três contadores (pendentes, atrasadas, concluídas) vêm de `contar_por_situacao`,
+aplicada só às tarefas da pessoa. Cada um é um link para a lista principal já filtrada.
 
 ### `ResponsavelDeleteView`
 
@@ -431,7 +452,9 @@ Prazo novo merece lembrete novo. Mudar só o título mantém o lembrete já envi
 Não é um `ModelForm` — é um formulário comum, com seis campos opcionais (`q`, `status`,
 `responsavel`, `projeto`, `categoria`, `etiqueta`), que existe para duas coisas ao mesmo
 tempo: **desenhar a barra de filtros** e **filtrar o queryset**, no método
-`filtrar(tarefas, agora)`.
+`filtrar(tarefas, agora)`. O parâmetro opcional
+`com_status=False` aplica todos os filtros menos a situação — é o que os contadores da lista
+usam.
 
 Se o formulário for inválido (alguém digitou `?status=xyz` na URL), ele devolve a lista
 inteira em vez de dar erro — decisão deliberada, com teste.
@@ -543,7 +566,7 @@ Tarefas do Windows ou pelo cron), não quando alguém abre uma página.
 `pessoa_responsavel_id` e agrupadas com `itertools.groupby`. O agrupamento é pelo **id**,
 e não pelo objeto: o `Meta.ordering` do `Responsavel` ordena por nome, e duas pessoas
 chamadas "Ana" ficariam grudadas no mesmo grupo — o comentário na linha 39 do arquivo
-explica exatamente isso, e há um teste cobrindo o caso (`tests.py:297`).
+explica exatamente isso, e há um teste cobrindo o caso (`tests.py:324`).
 
 **A marcação vem depois do envio.** `lembrete_enviado_em` só é gravado se o `send_mail`
 não levantar exceção; se o servidor de e-mail estiver fora do ar, aquela pessoa é pulada

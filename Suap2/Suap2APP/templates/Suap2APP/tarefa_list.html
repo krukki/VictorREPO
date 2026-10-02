@@ -8,6 +8,21 @@
         <a class="btn btn-primary" href="{% url 'tarefa_create' %}">+ Nova tarefa</a>
     </div>
 
+    <div class="contadores">
+        <a class="contador{% if not status_atual %} contador-ativo{% endif %}" href="{% querystring status=None page=None %}">
+            <strong>{{ total }}</strong> no total
+        </a>
+        <a class="contador{% if status_atual == 'pendentes' %} contador-ativo{% endif %}" href="{% querystring status='pendentes' page=None %}">
+            <strong>{{ pendentes }}</strong> pendente{{ pendentes|pluralize }}
+        </a>
+        <a class="contador{% if atrasadas %} contador-alerta{% endif %}{% if status_atual == 'atrasadas' %} contador-ativo{% endif %}" href="{% querystring status='atrasadas' page=None %}">
+            <strong>{{ atrasadas }}</strong> atrasada{{ atrasadas|pluralize }}
+        </a>
+        <a class="contador{% if status_atual == 'concluidas' %} contador-ativo{% endif %}" href="{% querystring status='concluidas' page=None %}">
+            <strong>{{ concluidas }}</strong> concluída{{ concluidas|pluralize }}
+        </a>
+    </div>
+
     <form method="get" class="filtros">
         <div class="filtro-busca">
             <label for="{{ filtro.q.id_for_label }}">{{ filtro.q.label }}</label>

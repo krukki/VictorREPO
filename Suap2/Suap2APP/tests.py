@@ -90,13 +90,13 @@ class TarefaTests(BaseTestCase):
     def test_lista_nao_faz_uma_consulta_por_tarefa(self):
         for i in range(5):
             self.criar_tarefa(f'Tarefa {i}')
-        # sessão, usuário, contagem da paginação, as 4 opções dos filtros, as tarefas
-        # com responsável/projeto/categoria e os prefetch de etiquetas e subtarefas
-        with self.assertNumQueries(10):
+        # sessão, usuário, contagem da paginação, os contadores, as 4 opções dos filtros, as
+        # tarefas com responsável/projeto/categoria e os prefetch de etiquetas e subtarefas
+        with self.assertNumQueries(11):
             self.client.get(reverse('tarefa_list'))
         for i in range(5, 10):
             self.criar_tarefa(f'Tarefa {i}')
-        with self.assertNumQueries(10):
+        with self.assertNumQueries(11):
             self.client.get(reverse('tarefa_list'))
 
     def test_lista_marca_tarefa_atrasada(self):
@@ -289,6 +289,33 @@ class FiltroTarefaTests(BaseTestCase):
 
         response = self.client.get(reverse('tarefa_list'), {'status': 'pendentes', 'page': 2})
         self.assertEqual(len(response.context['tarefas']), 5)
+
+    def contadores(self, **params):
+        context = self.client.get(reverse('tarefa_list'), params).context
+        return {chave: context[chave] for chave in ('total', 'pendentes', 'atrasadas', 'concluidas')}
+
+    def test_contadores(self):
+        esperado = {'total': 4, 'pendentes': 3, 'atrasadas': 1, 'concluidas': 1}
+        self.assertEqual(self.contadores(), esperado)
+
+    def test_contadores_ignoram_situacao(self):
+        esperado = {'total': 4, 'pendentes': 3, 'atrasadas': 1, 'concluidas': 1}
+        self.assertEqual(self.contadores(status='concluidas'), esperado)
+
+    def test_contadores_respeitam_responsavel_e_busca(self):
+        self.assertEqual(
+            self.contadores(responsavel=self.outro.pk),
+            {'total': 1, 'pendentes': 1, 'atrasadas': 0, 'concluidas': 0},
+        )
+        self.assertEqual(
+            self.contadores(q='conta'),
+            {'total': 1, 'pendentes': 1, 'atrasadas': 1, 'concluidas': 0},
+        )
+
+    def test_contador_mantem_busca_e_volta_para_primeira_pagina(self):
+        response = self.client.get(reverse('tarefa_list'), {'q': 'a', 'status': 'pendentes', 'page': 1})
+        self.assertContains(response, 'href="?q=a&amp;status=atrasadas"')
+        self.assertContains(response, 'class="contador contador-ativo" href="?q=a&amp;status=pendentes"')
 
     def test_concluir_volta_para_a_pagina_filtrada(self):
         destino = reverse('tarefa_list') + '?status=pendentes'

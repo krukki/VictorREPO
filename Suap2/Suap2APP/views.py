@@ -113,6 +113,17 @@ class PainelView(LoginRequiredMixin, TemplateView):
         return context
 
 
+def contar_por_situacao(tarefas, agora):
+    pendente = Q(concluida_em__isnull=True)
+    return tarefas.aggregate(
+        pendentes=Count('pk', filter=pendente),
+        atrasadas=Count('pk', filter=pendente & Q(prazo__lt=agora)),
+        concluidas=Count('pk', filter=Q(concluida_em__isnull=False)),
+    )
+
+
+# Tarefas
+
 class TarefaListView(LoginRequiredMixin, ListView):
     model = Tarefa
     context_object_name = 'tarefas'
@@ -128,6 +139,11 @@ class TarefaListView(LoginRequiredMixin, ListView):
         context['now'] = self.agora
         context['filtro'] = self.filtro
         context['filtrando'] = any(self.request.GET.get(campo) for campo in self.filtro.fields)
+        # Os contadores respeitam busca e responsável, mas não a situação: cada um vira uma aba
+        sem_status = self.filtro.filtrar(Tarefa.objects.all(), self.agora, com_status=False)
+        context.update(contar_por_situacao(sem_status, self.agora))
+        context['total'] = context['pendentes'] + context['concluidas']
+        context['status_atual'] = self.filtro.cleaned_data.get('status', '')
         return context
 
 
@@ -282,12 +298,7 @@ class ResponsavelDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         agora = timezone.now()
         tarefas = self.object.tarefa_set.com_relacionados()
-        pendente = Q(concluida_em__isnull=True)
-        context.update(tarefas.aggregate(
-            pendentes=Count('pk', filter=pendente),
-            atrasadas=Count('pk', filter=pendente & Q(prazo__lt=agora)),
-            concluidas=Count('pk', filter=Q(concluida_em__isnull=False)),
-        ))
+        context.update(contar_por_situacao(tarefas, agora))
         context['horas'] = self.object.registros_tempo.aggregate(total=Sum('horas'))['total']
         context['tarefas'] = tarefas
         context['now'] = agora
@@ -397,12 +408,7 @@ class ProjetoDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         agora = timezone.now()
         tarefas = self.object.tarefas.com_relacionados()
-        pendente = Q(concluida_em__isnull=True)
-        context.update(tarefas.aggregate(
-            pendentes=Count('pk', filter=pendente),
-            atrasadas=Count('pk', filter=pendente & Q(prazo__lt=agora)),
-            concluidas=Count('pk', filter=Q(concluida_em__isnull=False)),
-        ))
+        context.update(contar_por_situacao(tarefas, agora))
         context['horas'] = RegistroTempo.objects.filter(
             tarefa__projeto=self.object,
         ).aggregate(total=Sum('horas'))['total']

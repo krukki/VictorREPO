@@ -320,8 +320,10 @@ h2 {
 
 .contadores {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
     gap: 10px;
+    margin-bottom: 16px;
 }
 
 .contador {
@@ -346,6 +348,12 @@ h2 {
 
 .contador-alerta strong {
     color: #c92a2a;
+}
+
+.contador-ativo,
+.contador-ativo:hover {
+    border-color: #3b5bdb;
+    background: #edf2ff;
 }
 
 /* Painel */

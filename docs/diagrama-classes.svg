@@ -1,0 +1,153 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1320 1162" width="1320" height="1162" font-family="Helvetica, Arial, sans-serif" font-size="12">
+<rect width="1320" height="1162" fill="#ffffff"/>
+<g stroke="#222" stroke-width="1.2" fill="none">
+<polyline points="150,134 150,220"/>
+<polyline points="230,134 230,180 490,180 490,220"/>
+<polyline points="620,70 670,70 670,460 720,460 720,500"/>
+<polyline points="830,110 830,440 770,440 770,500"/>
+<polyline points="580,406 580,500"/>
+<polyline points="200,382 200,450 530,450 530,500"/>
+<polyline points="60,382 60,980"/>
+<polyline points="120,382 120,480 440,480 440,980"/>
+<polyline points="1170,78 1170,220"/>
+<polyline points="220,980 220,780 482,780"/>
+<polyline points="490,980 490,920 650,920 650,872"/>
+<polyline points="830,980 830,920 650,920 650,872"/>
+<polyline points="1170,980 1170,700 818,700"/>
+<polyline points="1100,382 1100,600 818,600"/>
+</g>
+<polygon fill="#222" points="500,780 491,774 482,780 491,786"/>
+<polygon fill="#222" points="650,854 644,863 650,872 656,863"/>
+<polygon fill="#222" points="650,854 644,863 650,872 656,863"/>
+<polygon fill="#222" points="800,700 809,706 818,700 809,694"/>
+<polygon fill="#222" points="800,600 809,606 818,600 809,594"/>
+<rect x="20" y="20" width="260" height="114" fill="#fff" stroke="#222" stroke-width="1.2"/>
+<line x1="20" y1="54" x2="280" y2="54" stroke="#222"/>
+<text x="150.0" y="42" text-anchor="middle" font-weight="bold" font-size="13">Departamento</text>
+<text x="28" y="70">- nome : String</text>
+<text x="28" y="94">- sigla : String</text>
+<line x1="20" y1="106.0" x2="280" y2="106.0" stroke="#222"/>
+<text x="28" y="126">+ toString() : String</text>
+<rect x="360" y="20" width="260" height="114" fill="#fff" stroke="#222" stroke-width="1.2"/>
+<line x1="360" y1="54" x2="620" y2="54" stroke="#222"/>
+<text x="490.0" y="42" text-anchor="middle" font-weight="bold" font-size="13">Categoria</text>
+<text x="368" y="70">- nome : String</text>
+<text x="368" y="94">- cor : String</text>
+<line x1="360" y1="106.0" x2="620" y2="106.0" stroke="#222"/>
+<text x="368" y="126">+ toString() : String</text>
+<rect x="700" y="20" width="260" height="90" fill="#fff" stroke="#222" stroke-width="1.2"/>
+<line x1="700" y1="54" x2="960" y2="54" stroke="#222"/>
+<text x="830.0" y="42" text-anchor="middle" font-weight="bold" font-size="13">Etiqueta</text>
+<text x="708" y="70">- nome : String</text>
+<line x1="700" y1="82.0" x2="960" y2="82.0" stroke="#222"/>
+<text x="708" y="102">+ toString() : String</text>
+<rect x="1040" y="20" width="260" height="58" fill="#fff" stroke="#222" stroke-width="1.2"/>
+<line x1="1040" y1="54" x2="1300" y2="54" stroke="#222"/>
+<text x="1170.0" y="42" text-anchor="middle" font-weight="bold" font-size="13">User (Django)</text>
+<text x="1048" y="70">- username : String</text>
+<rect x="20" y="220" width="260" height="162" fill="#fff" stroke="#222" stroke-width="1.2"/>
+<line x1="20" y1="254" x2="280" y2="254" stroke="#222"/>
+<text x="150.0" y="242" text-anchor="middle" font-weight="bold" font-size="13">Responsavel</text>
+<text x="28" y="270">- nome : String</text>
+<text x="28" y="294">- cpf : String</text>
+<text x="28" y="318">- email : String</text>
+<text x="28" y="342">- telefone : String</text>
+<line x1="20" y1="354.0" x2="280" y2="354.0" stroke="#222"/>
+<text x="28" y="374">+ toString() : String</text>
+<rect x="360" y="220" width="260" height="186" fill="#fff" stroke="#222" stroke-width="1.2"/>
+<line x1="360" y1="254" x2="620" y2="254" stroke="#222"/>
+<text x="490.0" y="242" text-anchor="middle" font-weight="bold" font-size="13">Projeto</text>
+<text x="368" y="270">- nome : String</text>
+<text x="368" y="294">- descricao : String</text>
+<text x="368" y="318">- inicio : Date</text>
+<text x="368" y="342">- fim : Date</text>
+<line x1="360" y1="354.0" x2="620" y2="354.0" stroke="#222"/>
+<text x="368" y="374">+ toString() : String</text>
+<text x="368" y="398">+ estaEncerrado() : boolean</text>
+<rect x="1040" y="220" width="260" height="162" fill="#fff" stroke="#222" stroke-width="1.2"/>
+<line x1="1040" y1="254" x2="1300" y2="254" stroke="#222"/>
+<text x="1170.0" y="242" text-anchor="middle" font-weight="bold" font-size="13">Atividade</text>
+<text x="1048" y="270">- acao : String</text>
+<text x="1048" y="294">- detalhe : String</text>
+<text x="1048" y="318">- criadaEm : DateTime</text>
+<line x1="1040" y1="330.0" x2="1300" y2="330.0" stroke="#222"/>
+<text x="1048" y="350">+ toString() : String</text>
+<text x="1048" y="374">+ texto() : String</text>
+<rect x="500" y="500" width="300" height="354" fill="#fff" stroke="#222" stroke-width="1.2"/>
+<line x1="500" y1="534" x2="800" y2="534" stroke="#222"/>
+<text x="650.0" y="522" text-anchor="middle" font-weight="bold" font-size="13">Tarefa</text>
+<text x="508" y="550">- titulo : String</text>
+<text x="508" y="574">- prioridade : String</text>
+<text x="508" y="598">- criadaEm : DateTime</text>
+<text x="508" y="622">- prazo : DateTime</text>
+<text x="508" y="646">- iniciadaEm : DateTime</text>
+<text x="508" y="670">- concluidaEm : DateTime</text>
+<text x="508" y="694">- lembreteEnviadoEm : DateTime</text>
+<line x1="500" y1="706.0" x2="800" y2="706.0" stroke="#222"/>
+<text x="508" y="726">+ toString() : String</text>
+<text x="508" y="750">+ estaAtrasada() : boolean</text>
+<text x="508" y="774">+ calcularProgresso() : int</text>
+<text x="508" y="798">+ horasRegistradas() : float</text>
+<text x="508" y="822">+ situacao() : String</text>
+<text x="508" y="846">+ mudarSituacao(nova : String) : String</text>
+<rect x="20" y="980" width="260" height="138" fill="#fff" stroke="#222" stroke-width="1.2"/>
+<line x1="20" y1="1014" x2="280" y2="1014" stroke="#222"/>
+<text x="150.0" y="1002" text-anchor="middle" font-weight="bold" font-size="13">RegistroTempo</text>
+<text x="28" y="1030">- horas : float</text>
+<text x="28" y="1054">- data : Date</text>
+<text x="28" y="1078">- observacao : String</text>
+<line x1="20" y1="1090.0" x2="280" y2="1090.0" stroke="#222"/>
+<text x="28" y="1110">+ toString() : String</text>
+<rect x="360" y="980" width="260" height="114" fill="#fff" stroke="#222" stroke-width="1.2"/>
+<line x1="360" y1="1014" x2="620" y2="1014" stroke="#222"/>
+<text x="490.0" y="1002" text-anchor="middle" font-weight="bold" font-size="13">Comentario</text>
+<text x="368" y="1030">- texto : String</text>
+<text x="368" y="1054">- criadoEm : DateTime</text>
+<line x1="360" y1="1066.0" x2="620" y2="1066.0" stroke="#222"/>
+<text x="368" y="1086">+ toString() : String</text>
+<rect x="700" y="980" width="260" height="162" fill="#fff" stroke="#222" stroke-width="1.2"/>
+<line x1="700" y1="1014" x2="960" y2="1014" stroke="#222"/>
+<text x="830.0" y="1002" text-anchor="middle" font-weight="bold" font-size="13">Anexo</text>
+<text x="708" y="1030">- arquivo : String</text>
+<text x="708" y="1054">- descricao : String</text>
+<text x="708" y="1078">- enviadoEm : DateTime</text>
+<line x1="700" y1="1090.0" x2="960" y2="1090.0" stroke="#222"/>
+<text x="708" y="1110">+ toString() : String</text>
+<text x="708" y="1134">+ nomeArquivo() : String</text>
+<rect x="1040" y="980" width="260" height="138" fill="#fff" stroke="#222" stroke-width="1.2"/>
+<line x1="1040" y1="1014" x2="1300" y2="1014" stroke="#222"/>
+<text x="1170.0" y="1002" text-anchor="middle" font-weight="bold" font-size="13">Subtarefa</text>
+<text x="1048" y="1030">- descricao : String</text>
+<text x="1048" y="1054">- concluida : boolean</text>
+<text x="1048" y="1078">- ordem : int</text>
+<line x1="1040" y1="1090.0" x2="1300" y2="1090.0" stroke="#222"/>
+<text x="1048" y="1110">+ toString() : String</text>
+<text x="164" y="154" text-anchor="middle" font-size="11" font-weight="bold">0..1</text>
+<text x="164" y="212" text-anchor="middle" font-size="11" font-weight="bold">0..*</text>
+<text x="244" y="154" text-anchor="middle" font-size="11" font-weight="bold">0..1</text>
+<text x="504" y="212" text-anchor="middle" font-size="11" font-weight="bold">0..*</text>
+<text x="642" y="66" text-anchor="middle" font-size="11" font-weight="bold">0..1</text>
+<text x="734" y="492" text-anchor="middle" font-size="11" font-weight="bold">0..*</text>
+<text x="844" y="130" text-anchor="middle" font-size="11" font-weight="bold">0..*</text>
+<text x="784" y="492" text-anchor="middle" font-size="11" font-weight="bold">0..*</text>
+<text x="594" y="426" text-anchor="middle" font-size="11" font-weight="bold">0..1</text>
+<text x="594" y="492" text-anchor="middle" font-size="11" font-weight="bold">0..*</text>
+<text x="214" y="402" text-anchor="middle" font-size="11" font-weight="bold">1</text>
+<text x="544" y="492" text-anchor="middle" font-size="11" font-weight="bold">0..*</text>
+<text x="74" y="402" text-anchor="middle" font-size="11" font-weight="bold">1</text>
+<text x="74" y="972" text-anchor="middle" font-size="11" font-weight="bold">0..*</text>
+<text x="134" y="402" text-anchor="middle" font-size="11" font-weight="bold">0..1</text>
+<text x="454" y="972" text-anchor="middle" font-size="11" font-weight="bold">0..*</text>
+<text x="1184" y="98" text-anchor="middle" font-size="11" font-weight="bold">0..1</text>
+<text x="1184" y="212" text-anchor="middle" font-size="11" font-weight="bold">0..*</text>
+<text x="234" y="972" text-anchor="middle" font-size="11" font-weight="bold">0..*</text>
+<text x="478" y="776" text-anchor="middle" font-size="11" font-weight="bold">1</text>
+<text x="504" y="972" text-anchor="middle" font-size="11" font-weight="bold">0..*</text>
+<text x="664" y="874" text-anchor="middle" font-size="11" font-weight="bold">1</text>
+<text x="844" y="972" text-anchor="middle" font-size="11" font-weight="bold">0..*</text>
+<text x="664" y="874" text-anchor="middle" font-size="11" font-weight="bold">1</text>
+<text x="1184" y="972" text-anchor="middle" font-size="11" font-weight="bold">0..*</text>
+<text x="822" y="696" text-anchor="middle" font-size="11" font-weight="bold">1</text>
+<text x="1114" y="402" text-anchor="middle" font-size="11" font-weight="bold">0..*</text>
+<text x="822" y="596" text-anchor="middle" font-size="11" font-weight="bold">1</text>
+</svg>

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "suap2",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["Suap2/manage.py", "runserver", "8000"],
+      "port": 8000
+    }
+  ]
+}

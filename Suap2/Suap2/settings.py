@@ -29,6 +29,9 @@ DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'
 
 ALLOWED_HOSTS = [h for h in os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if h]
 
+# Endereços completos (com https://) de onde vêm os formulários, ex.: https://voce.pythonanywhere.com
+CSRF_TRUSTED_ORIGINS = [o for o in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if o]
+
 
 # Application definition
 
@@ -78,7 +81,9 @@ WSGI_APPLICATION = 'Suap2.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        # Em produção, aponte DJANGO_DB_PATH para um arquivo fora do repositório, para que
+        # um `git pull` nunca substitua o banco de verdade pelo db.sqlite3 de exemplo.
+        'NAME': os.environ.get('DJANGO_DB_PATH', BASE_DIR / 'db.sqlite3'),
     }
 }
 

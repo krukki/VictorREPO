@@ -3,38 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#1B5C96">
     <title>{% block title %}Suap2 — Tarefas{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'Suap2APP/css/tokens.css' %}">
-    <link rel="stylesheet" href="{% static 'Suap2APP/css/base.css' %}">
-    <link rel="stylesheet" href="{% static 'Suap2APP/css/components.css' %}">
-    <link rel="stylesheet" href="{% static 'Suap2APP/css/pages.css' %}">
-    {% block extra_css %}{% endblock %}
+    {# Aplica o tema salvo antes de desenhar a página, para não piscar claro → escuro #}
+    <script>
+        try {
+            var tema = localStorage.getItem('suap2-tema');
+            if (tema === 'claro' || tema === 'escuro') {
+                document.documentElement.dataset.theme = tema === 'escuro' ? 'dark' : 'light';
+            }
+        } catch (e) {}
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+    <link rel="stylesheet" href="{% static 'Suap2APP/style.css' %}">
+    <script src="{% static 'Suap2APP/app.js' %}" defer></script>
 </head>
-<body class="{% block body_class %}{% endblock %}">
+<body>
     {% include 'Suap2APP/_icones.html' %}
-    {% include 'Suap2APP/_fundo.html' %}
 
-    <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+    <header class="topo">
+        <div class="topo-conteudo">
+            <a class="marca" href="{% if user.is_authenticated %}{% url 'painel' %}{% else %}{% url 'login' %}{% endif %}">
+                <span class="marca-icone"><svg class="icone" aria-hidden="true"><use href="#i-marca"></use></svg></span>
+                Suap2
+            </a>
 
-    <div class="pagina">
-        {% include 'Suap2APP/_topo.html' %}
-
-        <div class="janela">
             {% if user.is_authenticated %}
-                {% include 'Suap2APP/_navbar.html' %}
+                {% with r=request.resolver_match.url_name %}
+                <input type="checkbox" id="menu-abrir" class="menu-check">
+                <label for="menu-abrir" class="menu-botao botao-icone" title="Menu">
+                    <svg class="icone" aria-hidden="true"><use href="#i-menu"></use></svg>
+                    <span class="sr-only">Abrir menu</span>
+                </label>
+
+                <nav class="menu" aria-label="Principal">
+                    <a href="{% url 'painel' %}"{% if r == 'painel' %} class="ativo" aria-current="page"{% endif %}>
+                        <svg class="icone" aria-hidden="true"><use href="#i-painel"></use></svg>Painel
+                    </a>
+                    <a href="{% url 'tarefa_list' %}"{% if 'tarefa_' in r %} class="ativo" aria-current="page"{% endif %}>
+                        <svg class="icone" aria-hidden="true"><use href="#i-tarefas"></use></svg>Tarefas
+                    </a>
+                    <a href="{% url 'quadro' %}"{% if r == 'quadro' %} class="ativo" aria-current="page"{% endif %}>
+                        <svg class="icone" aria-hidden="true"><use href="#i-quadro"></use></svg>Quadro
+                    </a>
+                    <a href="{% url 'calendario' %}"{% if r == 'calendario' %} class="ativo" aria-current="page"{% endif %}>
+                        <svg class="icone" aria-hidden="true"><use href="#i-calendario"></use></svg>Calendário
+                    </a>
+                    <a href="{% url 'projeto_list' %}"{% if 'projeto_' in r %} class="ativo" aria-current="page"{% endif %}>
+                        <svg class="icone" aria-hidden="true"><use href="#i-projetos"></use></svg>Projetos
+                    </a>
+                    <a href="{% url 'responsavel_list' %}"{% if 'responsavel_' in r %} class="ativo" aria-current="page"{% endif %}>
+                        <svg class="icone" aria-hidden="true"><use href="#i-pessoas"></use></svg>Responsáveis
+                    </a>
+                    <details class="suspenso">
+                        <summary{% if 'departamento_' in r or 'categoria_' in r or 'etiqueta_' in r %} class="ativo"{% endif %}>
+                            <svg class="icone" aria-hidden="true"><use href="#i-cadastros"></use></svg>Cadastros
+                            <svg class="icone icone-p" aria-hidden="true"><use href="#i-seta-baixo"></use></svg>
+                        </summary>
+                        <div class="suspenso-menu">
+                            <a href="{% url 'departamento_list' %}">Departamentos</a>
+                            <a href="{% url 'categoria_list' %}">Categorias</a>
+                            <a href="{% url 'etiqueta_list' %}">Etiquetas</a>
+                        </div>
+                    </details>
+                </nav>
+                {% endwith %}
+
+                <div class="topo-acoes">
+                    <button type="button" class="botao-icone" data-abrir-rapida data-url="{% url 'tarefa_rapida' %}" title="Adição rápida (N)">
+                        <svg class="icone" aria-hidden="true"><use href="#i-raio"></use></svg>
+                        <span class="sr-only">Adição rápida</span>
+                    </button>
+                    <button type="button" class="botao-icone" data-alternar-tema title="Tema claro/escuro">
+                        <svg class="icone so-claro" aria-hidden="true"><use href="#i-lua"></use></svg>
+                        <svg class="icone so-escuro" aria-hidden="true"><use href="#i-sol"></use></svg>
+                        <span class="sr-only">Alternar tema claro/escuro</span>
+                    </button>
+                    <details class="suspenso suspenso-direita">
+                        <summary class="usuario" title="{{ user.get_username }}">
+                            <svg class="icone" aria-hidden="true"><use href="#i-usuario"></use></svg>
+                            <span class="usuario-nome">{{ user.get_username }}</span>
+                        </summary>
+                        <div class="suspenso-menu">
+                            <button type="button" class="suspenso-item" data-abrir-atalhos>
+                                <svg class="icone" aria-hidden="true"><use href="#i-teclado"></use></svg>Atalhos do teclado
+                            </button>
+                            {% if user.is_staff %}
+                                <a href="{% url 'admin:index' %}">Administração</a>
+                            {% endif %}
+                            <form method="post" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="suspenso-item">
+                                    <svg class="icone" aria-hidden="true"><use href="#i-sair"></use></svg>Sair
+                                </button>
+                            </form>
+                        </div>
+                    </details>
+                    <a class="btn btn-claro nova-tarefa" href="{% url 'tarefa_create' %}">
+                        <svg class="icone" aria-hidden="true"><use href="#i-mais"></use></svg><span>Nova tarefa</span>
+                    </a>
+                </div>
+            {% else %}
+                <div class="topo-acoes">
+                    <button type="button" class="botao-icone" data-alternar-tema title="Tema claro/escuro">
+                        <svg class="icone so-claro" aria-hidden="true"><use href="#i-lua"></use></svg>
+                        <svg class="icone so-escuro" aria-hidden="true"><use href="#i-sol"></use></svg>
+                        <span class="sr-only">Alternar tema claro/escuro</span>
+                    </button>
+                </div>
             {% endif %}
-
-            <main id="conteudo" class="conteudo" tabindex="-1">
-                {% include 'Suap2APP/_mensagens.html' %}
-                {% block content %}{% endblock %}
-            </main>
         </div>
+    </header>
 
-        {% include 'Suap2APP/_rodape.html' %}
-    </div>
+    <main class="conteudo {% block classe_conteudo %}{% endblock %}">
+        {% if messages %}
+            <ul class="mensagens">
+                {% for message in messages %}
+                    <li class="{{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
 
-    <script src="{% static 'Suap2APP/js/aero.js' %}" defer></script>
-    {% block extra_js %}{% endblock %}
+        {% block content %}{% endblock %}
+    </main>
+
+    {% if user.is_authenticated %}
+        {# O formulário da adição rápida vem de tarefas/rapida/ quando a janela abre #}
+        <dialog class="janela" id="janela-rapida" aria-labelledby="titulo-rapida">
+            <div class="janela-cabecalho">
+                <h2 id="titulo-rapida"><svg class="icone" aria-hidden="true"><use href="#i-raio"></use></svg>Adição rápida</h2>
+                <button type="button" class="botao-icone" data-fechar title="Fechar (Esc)">
+                    <svg class="icone" aria-hidden="true"><use href="#i-fechar"></use></svg><span class="sr-only">Fechar</span>
+                </button>
+            </div>
+            <div class="janela-corpo" data-conteudo-rapida><p class="vazio">Carregando…</p></div>
+        </dialog>
+
+        <dialog class="janela" id="janela-atalhos" aria-labelledby="titulo-atalhos">
+            <div class="janela-cabecalho">
+                <h2 id="titulo-atalhos"><svg class="icone" aria-hidden="true"><use href="#i-teclado"></use></svg>Atalhos do teclado</h2>
+                <button type="button" class="botao-icone" data-fechar title="Fechar (Esc)">
+                    <svg class="icone" aria-hidden="true"><use href="#i-fechar"></use></svg><span class="sr-only">Fechar</span>
+                </button>
+            </div>
+            <div class="janela-corpo">
+                <dl class="atalhos">
+                    <dt><kbd>N</kbd></dt><dd>Adição rápida de tarefa</dd>
+                    <dt><kbd>/</kbd></dt><dd>Ir para a busca</dd>
+                    <dt><kbd>G</kbd> <kbd>P</kbd></dt><dd>Painel</dd>
+                    <dt><kbd>G</kbd> <kbd>T</kbd></dt><dd>Tarefas</dd>
+                    <dt><kbd>G</kbd> <kbd>Q</kbd></dt><dd>Quadro</dd>
+                    <dt><kbd>G</kbd> <kbd>C</kbd></dt><dd>Calendário</dd>
+                    <dt><kbd>?</kbd></dt><dd>Mostrar esta lista</dd>
+                </dl>
+            </div>
+        </dialog>
+
+        <div hidden data-urls
+             data-painel="{% url 'painel' %}"
+             data-tarefas="{% url 'tarefa_list' %}"
+             data-quadro="{% url 'quadro' %}"
+             data-calendario="{% url 'calendario' %}"></div>
+    {% endif %}
 </body>
 </html>

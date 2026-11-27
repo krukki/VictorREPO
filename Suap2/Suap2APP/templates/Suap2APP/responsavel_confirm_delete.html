@@ -2,31 +2,35 @@
 
 {% block title %}Excluir responsável — Suap2{% endblock %}
 
+{% block classe_conteudo %}conteudo-estreito{% endblock %}
+
 {% block content %}
-    <h1>Excluir responsável</h1>
+    <div class="caixa">
+        <h1>Excluir responsável</h1>
 
-    {% if total_tarefas or total_registros %}
-        <p>
-            Não é possível excluir <strong>{{ responsavel.nome }}</strong>: ainda há
-            {% if total_tarefas %}
-                {{ total_tarefas }} tarefa{{ total_tarefas|pluralize }} atribuída{{ total_tarefas|pluralize }} a essa pessoa{% if total_registros %} e{% endif %}
-            {% endif %}
-            {% if total_registros %}
-                {{ total_registros }} registro{{ total_registros|pluralize }} de tempo no nome dela
-            {% endif %}.
-            Reatribua ou exclua esses registros primeiro.
-        </p>
+        {% if total_tarefas or total_registros %}
+            <p>
+                Não é possível excluir <strong>{{ responsavel.nome }}</strong>: ainda há
+                {% if total_tarefas %}
+                    {{ total_tarefas }} tarefa{{ total_tarefas|pluralize }} atribuída{{ total_tarefas|pluralize }} a essa pessoa{% if total_registros %} e{% endif %}
+                {% endif %}
+                {% if total_registros %}
+                    {{ total_registros }} registro{{ total_registros|pluralize }} de tempo no nome dela
+                {% endif %}.
+                Reatribua ou exclua esses registros primeiro.
+            </p>
 
-        <div class="botoes">
-            <a class="btn btn-secondary" href="{% url 'responsavel_list' %}">Voltar</a>
-        </div>
-    {% else %}
-        <p>Tem certeza que deseja excluir o responsável <strong>{{ responsavel.nome }}</strong>? Essa ação não pode ser desfeita.</p>
+            <div class="botoes">
+                <a class="btn btn-secondary" href="{% url 'responsavel_list' %}">Voltar</a>
+            </div>
+        {% else %}
+            <p>Tem certeza que deseja excluir o responsável <strong>{{ responsavel.nome }}</strong>? Essa ação não pode ser desfeita.</p>
 
-        <form method="post" class="botoes">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-danger">Excluir</button>
-            <a class="btn btn-secondary" href="{% url 'responsavel_list' %}">Cancelar</a>
-        </form>
-    {% endif %}
+            <form method="post" class="botoes">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Excluir</button>
+                <a class="btn btn-secondary" href="{% url 'responsavel_list' %}">Cancelar</a>
+            </form>
+        {% endif %}
+    </div>
 {% endblock %}

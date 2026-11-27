@@ -1,0 +1,107 @@
+{% extends 'Suap2APP/base.html' %}
+
+{% block title %}Quadro — Suap2{% endblock %}
+
+{% block content %}
+    <div class="cabecalho">
+        <div>
+            <h1>Quadro</h1>
+            <p class="item-detalhe subtitulo">Arraste os cartões entre as colunas, ou use as setas de cada cartão.</p>
+        </div>
+        <div class="acoes">
+            <a class="btn btn-secondary" href="{% url 'tarefa_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
+                <svg class="icone" aria-hidden="true"><use href="#i-tarefas"></use></svg>Ver em lista
+            </a>
+            <a class="btn btn-primary" href="{% url 'tarefa_create' %}">
+                <svg class="icone" aria-hidden="true"><use href="#i-mais"></use></svg>Nova tarefa
+            </a>
+        </div>
+    </div>
+
+    <details class="filtros-recolhivel" data-filtros{% if filtrando %} data-filtrando{% endif %} open>
+        <summary class="btn btn-secondary">Filtros{% if filtrando %} (ativos){% endif %}</summary>
+        <form method="get" class="filtros filtros-linha" role="search">
+            <div class="filtro-busca">
+                <label for="{{ filtro.q.id_for_label }}">{{ filtro.q.label }}</label>
+                {{ filtro.q }}
+            </div>
+            {% for campo in filtro %}
+                {% if campo.name == 'responsavel' or campo.name == 'projeto' or campo.name == 'categoria' or campo.name == 'prioridade' %}
+                    <div>
+                        <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+                        {{ campo }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+            <div class="filtro-botoes">
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+                {% if filtrando %}
+                    <a class="btn btn-link" href="{% url 'quadro' %}">Limpar</a>
+                {% endif %}
+            </div>
+        </form>
+    </details>
+
+    <div class="quadro" data-quadro>
+        {% csrf_token %}
+        {% for coluna in colunas %}
+            <section class="coluna coluna-{{ coluna.situacao }}" data-coluna="{{ coluna.situacao }}"
+                     data-anterior="{{ coluna.anterior }}" data-proxima="{{ coluna.proxima }}"
+                     aria-labelledby="coluna-{{ coluna.situacao }}">
+                <div class="coluna-cabecalho">
+                    <h2 id="coluna-{{ coluna.situacao }}">{{ coluna.titulo }}</h2>
+                    <span class="coluna-total" data-total>{{ coluna.tarefas|length }}</span>
+                </div>
+                <div class="coluna-cartoes" data-cartoes>
+                    {% for tarefa in coluna.tarefas %}
+                        <article class="cartao prioridade-{{ tarefa.prioridade }}" draggable="true"
+                                 data-cartao data-url="{% url 'tarefa_mover' tarefa.pk %}">
+                            <div class="cartao-titulo"><a href="{% url 'tarefa_detail' tarefa.pk %}" draggable="false">{{ tarefa.titulo }}</a></div>
+                            <div class="cartao-detalhe">
+                                {% if tarefa.concluida_em %}
+                                    <span>Concluída em {{ tarefa.concluida_em|date:"d/m" }}</span>
+                                {% elif tarefa.prazo < now %}
+                                    <span class="atrasada">Atrasada · {{ tarefa.prazo|date:"d/m H:i" }}</span>
+                                {% else %}
+                                    <span><svg class="icone icone-p" aria-hidden="true"><use href="#i-relogio"></use></svg> {{ tarefa.prazo|date:"d/m H:i" }}</span>
+                                {% endif %}
+                                <span>{{ tarefa.pessoa_responsavel.nome }}</span>
+                                {% if tarefa.subtarefas.all %}<span>Checklist {{ tarefa.progresso }}%</span>{% endif %}
+                            </div>
+                            <div class="cartao-rodape">
+                                <div class="marcadores">
+                                    {% include 'Suap2APP/_prioridade.html' %}
+                                    {% if tarefa.categoria %}
+                                        <span class="badge cor-{{ tarefa.categoria.cor }}">{{ tarefa.categoria.nome }}</span>
+                                    {% endif %}
+                                </div>
+                                {# Sem JavaScript, as setas mandam o formulário normalmente #}
+                                <form method="post" action="{% url 'tarefa_mover' tarefa.pk %}" class="cartao-mover">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <button type="submit" name="situacao" value="{{ coluna.anterior }}" class="botao-icone"
+                                            data-mover="anterior" title="Mover para a coluna anterior"{% if not coluna.anterior %} hidden{% endif %}>
+                                        <svg class="icone" aria-hidden="true"><use href="#i-seta-esq"></use></svg>
+                                        <span class="sr-only">Mover para a coluna anterior</span>
+                                    </button>
+                                    <button type="submit" name="situacao" value="{{ coluna.proxima }}" class="botao-icone"
+                                            data-mover="proxima" title="Mover para a próxima coluna"{% if not coluna.proxima %} hidden{% endif %}>
+                                        <svg class="icone" aria-hidden="true"><use href="#i-seta-dir"></use></svg>
+                                        <span class="sr-only">Mover para a próxima coluna</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </article>
+                    {% endfor %}
+                    <p class="coluna-vazia">Nenhuma tarefa aqui.<br>Arraste um cartão para esta coluna.</p>
+                </div>
+                {% if coluna.situacao == 'concluida' %}
+                    <div class="coluna-rodape item-detalhe">
+                        Concluídas nos últimos {{ dias_de_concluidas }} dias ·
+                        <a href="{% url 'tarefa_list' %}?status=concluidas">ver todas</a>
+                    </div>
+                {% endif %}
+            </section>
+        {% endfor %}
+    </div>
+{% endblock %}

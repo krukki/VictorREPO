@@ -178,12 +178,16 @@
       "titulo": "Entregar o relatório mensal",
       "criada_em": "2026-09-14T12:00:00Z",
       "prazo": "2026-09-19T21:00:00Z",
+      "prioridade": "media",
+      "iniciada_em": "2026-09-16T11:00:00Z",
       "concluida_em": null,
       "lembrete_enviado_em": null,
       "pessoa_responsavel": 1,
       "projeto": 3,
       "categoria": 1,
-      "etiquetas": [2]
+      "etiquetas": [
+        2
+      ]
     }
   },
   {
@@ -193,12 +197,17 @@
       "titulo": "Renovar o contrato do servidor",
       "criada_em": "2026-09-15T13:30:00Z",
       "prazo": "2026-09-25T16:00:00Z",
+      "prioridade": "alta",
+      "iniciada_em": "2026-09-20T12:30:00Z",
       "concluida_em": null,
       "lembrete_enviado_em": null,
       "pessoa_responsavel": 2,
       "projeto": 1,
       "categoria": 3,
-      "etiquetas": [1, 3]
+      "etiquetas": [
+        1,
+        3
+      ]
     }
   },
   {
@@ -208,12 +217,17 @@
       "titulo": "Pagar a fatura do provedor",
       "criada_em": "2026-09-08T14:10:00Z",
       "prazo": "2026-09-15T13:00:00Z",
+      "prioridade": "alta",
+      "iniciada_em": null,
       "concluida_em": null,
       "lembrete_enviado_em": null,
       "pessoa_responsavel": 3,
       "projeto": 3,
       "categoria": 4,
-      "etiquetas": [2, 3]
+      "etiquetas": [
+        2,
+        3
+      ]
     }
   },
   {
@@ -223,12 +237,16 @@
       "titulo": "Revisar o plano de aulas do semestre",
       "criada_em": "2026-09-16T11:45:00Z",
       "prazo": "2026-10-02T12:30:00Z",
+      "prioridade": "baixa",
+      "iniciada_em": null,
       "concluida_em": null,
       "lembrete_enviado_em": null,
       "pessoa_responsavel": 4,
       "projeto": 2,
       "categoria": 2,
-      "etiquetas": [4]
+      "etiquetas": [
+        4
+      ]
     }
   },
   {
@@ -238,12 +256,71 @@
       "titulo": "Fazer o backup do banco de dados",
       "criada_em": "2026-09-09T18:20:00Z",
       "prazo": "2026-09-12T22:00:00Z",
+      "prioridade": "media",
+      "iniciada_em": "2026-09-11T13:00:00Z",
       "concluida_em": "2026-09-11T20:20:00Z",
       "lembrete_enviado_em": null,
       "pessoa_responsavel": 5,
       "projeto": 1,
       "categoria": 3,
       "etiquetas": []
+    }
+  },
+  {
+    "model": "Suap2APP.tarefa",
+    "pk": 6,
+    "fields": {
+      "titulo": "Comprar toner para a secretaria",
+      "criada_em": "2026-11-20T13:00:00Z",
+      "prazo": "2026-11-30T15:00:00Z",
+      "prioridade": "baixa",
+      "iniciada_em": null,
+      "concluida_em": null,
+      "lembrete_enviado_em": null,
+      "pessoa_responsavel": 3,
+      "projeto": 3,
+      "categoria": 1,
+      "etiquetas": [
+        3
+      ]
+    }
+  },
+  {
+    "model": "Suap2APP.tarefa",
+    "pk": 7,
+    "fields": {
+      "titulo": "Montar a apresentação dos projetos finais",
+      "criada_em": "2026-11-18T12:00:00Z",
+      "prazo": "2026-12-04T18:00:00Z",
+      "prioridade": "alta",
+      "iniciada_em": "2026-11-24T14:00:00Z",
+      "concluida_em": null,
+      "lembrete_enviado_em": null,
+      "pessoa_responsavel": 4,
+      "projeto": null,
+      "categoria": 2,
+      "etiquetas": [
+        4
+      ]
+    }
+  },
+  {
+    "model": "Suap2APP.tarefa",
+    "pk": 8,
+    "fields": {
+      "titulo": "Trocar os cabos de rede do laboratório 2",
+      "criada_em": "2026-11-23T17:30:00Z",
+      "prazo": "2026-12-11T13:00:00Z",
+      "prioridade": "media",
+      "iniciada_em": null,
+      "concluida_em": null,
+      "lembrete_enviado_em": null,
+      "pessoa_responsavel": 2,
+      "projeto": 1,
+      "categoria": 3,
+      "etiquetas": [
+        1
+      ]
     }
   },
   {
@@ -378,6 +455,149 @@
       "horas": "0.75",
       "data": "2026-09-11",
       "observacao": "Backup conferido"
+    }
+  },
+  {
+    "model": "Suap2APP.atividade",
+    "pk": 1,
+    "fields": {
+      "tarefa": 1,
+      "usuario": null,
+      "acao": "criou",
+      "detalhe": "",
+      "criada_em": "2026-09-14T12:00:00Z"
+    }
+  },
+  {
+    "model": "Suap2APP.atividade",
+    "pk": 2,
+    "fields": {
+      "tarefa": 1,
+      "usuario": null,
+      "acao": "iniciou",
+      "detalhe": "",
+      "criada_em": "2026-09-16T11:00:00Z"
+    }
+  },
+  {
+    "model": "Suap2APP.atividade",
+    "pk": 3,
+    "fields": {
+      "tarefa": 2,
+      "usuario": null,
+      "acao": "criou",
+      "detalhe": "",
+      "criada_em": "2026-09-15T13:30:00Z"
+    }
+  },
+  {
+    "model": "Suap2APP.atividade",
+    "pk": 4,
+    "fields": {
+      "tarefa": 2,
+      "usuario": null,
+      "acao": "iniciou",
+      "detalhe": "",
+      "criada_em": "2026-09-20T12:30:00Z"
+    }
+  },
+  {
+    "model": "Suap2APP.atividade",
+    "pk": 5,
+    "fields": {
+      "tarefa": 3,
+      "usuario": null,
+      "acao": "criou",
+      "detalhe": "",
+      "criada_em": "2026-09-08T14:10:00Z"
+    }
+  },
+  {
+    "model": "Suap2APP.atividade",
+    "pk": 6,
+    "fields": {
+      "tarefa": 4,
+      "usuario": null,
+      "acao": "criou",
+      "detalhe": "",
+      "criada_em": "2026-09-16T11:45:00Z"
+    }
+  },
+  {
+    "model": "Suap2APP.atividade",
+    "pk": 7,
+    "fields": {
+      "tarefa": 5,
+      "usuario": null,
+      "acao": "criou",
+      "detalhe": "",
+      "criada_em": "2026-09-09T18:20:00Z"
+    }
+  },
+  {
+    "model": "Suap2APP.atividade",
+    "pk": 8,
+    "fields": {
+      "tarefa": 5,
+      "usuario": null,
+      "acao": "iniciou",
+      "detalhe": "",
+      "criada_em": "2026-09-11T13:00:00Z"
+    }
+  },
+  {
+    "model": "Suap2APP.atividade",
+    "pk": 9,
+    "fields": {
+      "tarefa": 5,
+      "usuario": null,
+      "acao": "concluiu",
+      "detalhe": "",
+      "criada_em": "2026-09-11T20:20:00Z"
+    }
+  },
+  {
+    "model": "Suap2APP.atividade",
+    "pk": 10,
+    "fields": {
+      "tarefa": 6,
+      "usuario": null,
+      "acao": "criou",
+      "detalhe": "",
+      "criada_em": "2026-11-20T13:00:00Z"
+    }
+  },
+  {
+    "model": "Suap2APP.atividade",
+    "pk": 11,
+    "fields": {
+      "tarefa": 7,
+      "usuario": null,
+      "acao": "criou",
+      "detalhe": "",
+      "criada_em": "2026-11-18T12:00:00Z"
+    }
+  },
+  {
+    "model": "Suap2APP.atividade",
+    "pk": 12,
+    "fields": {
+      "tarefa": 7,
+      "usuario": null,
+      "acao": "iniciou",
+      "detalhe": "",
+      "criada_em": "2026-11-24T14:00:00Z"
+    }
+  },
+  {
+    "model": "Suap2APP.atividade",
+    "pk": 13,
+    "fields": {
+      "tarefa": 8,
+      "usuario": null,
+      "acao": "criou",
+      "detalhe": "",
+      "criada_em": "2026-11-23T17:30:00Z"
     }
   }
 ]

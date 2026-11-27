@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from .models import (
     Anexo,
+    Atividade,
     Categoria,
     Comentario,
     Departamento,
@@ -40,16 +41,28 @@ class RegistroTempoInline(admin.TabularInline):
     autocomplete_fields = ['responsavel']
 
 
+class AtividadeInline(admin.TabularInline):
+    # O histórico só é escrito pelas telas; aqui ele aparece apenas para consulta
+    model = Atividade
+    extra = 0
+    fields = ['criada_em', 'usuario', 'acao', 'detalhe']
+    readonly_fields = fields
+    can_delete = False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(Tarefa)
 class TarefaAdmin(admin.ModelAdmin):
-    list_display = ['titulo', 'pessoa_responsavel', 'projeto', 'categoria', 'prazo', 'concluida_em', 'criada_em']
-    list_filter = ['pessoa_responsavel', 'projeto', 'categoria', 'etiquetas', 'prazo', 'concluida_em']
+    list_display = ['titulo', 'pessoa_responsavel', 'projeto', 'categoria', 'prioridade', 'prazo', 'iniciada_em', 'concluida_em']
+    list_filter = ['prioridade', 'pessoa_responsavel', 'projeto', 'categoria', 'etiquetas', 'prazo', 'concluida_em']
     search_fields = ['titulo', 'pessoa_responsavel__nome']
     list_select_related = ['pessoa_responsavel', 'projeto', 'categoria']
     autocomplete_fields = ['pessoa_responsavel', 'projeto', 'categoria']
     filter_horizontal = ['etiquetas']
     date_hierarchy = 'prazo'
-    inlines = [SubtarefaInline, ComentarioInline, AnexoInline, RegistroTempoInline]
+    inlines = [SubtarefaInline, ComentarioInline, AnexoInline, RegistroTempoInline, AtividadeInline]
 
 
 @admin.register(Responsavel)
@@ -122,3 +135,12 @@ class RegistroTempoAdmin(admin.ModelAdmin):
     list_select_related = ['tarefa', 'responsavel']
     autocomplete_fields = ['tarefa', 'responsavel']
     date_hierarchy = 'data'
+
+
+@admin.register(Atividade)
+class AtividadeAdmin(admin.ModelAdmin):
+    list_display = ['criada_em', 'tarefa', 'usuario', 'acao', 'detalhe']
+    list_filter = ['acao', 'criada_em']
+    search_fields = ['detalhe', 'tarefa__titulo']
+    list_select_related = ['tarefa', 'usuario']
+    date_hierarchy = 'criada_em'

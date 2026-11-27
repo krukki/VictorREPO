@@ -7,36 +7,24 @@ Não herda de base.html de propósito: o Django renderiza esta página sem conte
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#1B5C96">
     <title>Erro no servidor — Suap2</title>
-    <link rel="stylesheet" href="{% static 'Suap2APP/css/tokens.css' %}">
-    <link rel="stylesheet" href="{% static 'Suap2APP/css/base.css' %}">
-    <link rel="stylesheet" href="{% static 'Suap2APP/css/components.css' %}">
-    <link rel="stylesheet" href="{% static 'Suap2APP/css/pages.css' %}">
+    <link rel="stylesheet" href="{% static 'Suap2APP/style.css' %}">
 </head>
-<body class="pagina-centro">
-    {% include 'Suap2APP/_fundo.html' %}
-
-    <div class="pagina">
-        <header class="topo">
-            <a class="marca" href="/">Suap<span class="marca-versao">2</span></a>
-        </header>
-
-        <div class="janela">
-            <main class="conteudo">
-                <div class="destaque">
-                    <span class="orbe orbe-laranja destaque-orbe" aria-hidden="true">
-                        <span class="destaque-numero">500</span>
-                    </span>
-                    <h1>Algo deu errado</h1>
-                    <p>O servidor teve um problema ao abrir esta página. Tente de novo em instantes.</p>
-                </div>
-
-                <div class="botoes">
-                    <a class="btn btn-primary" href="/">Voltar ao início</a>
-                </div>
-            </main>
+<body>
+    <header class="topo">
+        <div class="topo-conteudo">
+            <a class="marca" href="/">Suap2</a>
         </div>
-    </div>
+    </header>
+    <main class="conteudo">
+        <div class="caixa pagina-erro">
+            <span class="pagina-erro-numero" aria-hidden="true">500</span>
+            <h1>Algo deu errado</h1>
+            <p class="item-detalhe">O servidor teve um problema ao abrir esta página. Tente de novo em instantes.</p>
+            <div class="botoes">
+                <a class="btn btn-primary" href="/">Voltar ao início</a>
+            </div>
+        </div>
+    </main>
 </body>
 </html>

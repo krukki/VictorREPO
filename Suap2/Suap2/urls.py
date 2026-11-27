@@ -22,6 +22,10 @@ urlpatterns = [
     path('tarefas/<int:pk>/editar/', views.TarefaUpdateView.as_view(), name='tarefa_update'),
     path('tarefas/<int:pk>/excluir/', views.TarefaDeleteView.as_view(), name='tarefa_delete'),
     path('tarefas/<int:pk>/concluir/', views.tarefa_toggle, name='tarefa_toggle'),
+    path('tarefas/<int:pk>/mover/', views.tarefa_mover, name='tarefa_mover'),
+    path('tarefas/rapida/', views.tarefa_rapida, name='tarefa_rapida'),
+    path('quadro/', views.QuadroView.as_view(), name='quadro'),
+    path('calendario/', views.CalendarioView.as_view(), name='calendario'),
     # Itens de dentro da tarefa (subtarefa, comentário, anexo, registro de tempo)
     path('subtarefas/<int:pk>/concluir/', views.subtarefa_toggle, name='subtarefa_toggle'),
     path('itens/<str:tipo>/<int:pk>/excluir/', views.item_delete, name='item_delete'),

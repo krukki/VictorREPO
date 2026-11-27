@@ -1,6 +1,7 @@
 import os
 from decimal import Decimal
 
+from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models.signals import post_delete
@@ -122,11 +123,44 @@ class TarefaQuerySet(models.QuerySet):
             'etiquetas', 'subtarefas',
         )
 
+    # As três situações. "Pendente" (usada nos contadores e filtros) é a_fazer + em_andamento.
+
+    def a_fazer(self):
+        return self.filter(concluida_em__isnull=True, iniciada_em__isnull=True)
+
+    def em_andamento(self):
+        return self.filter(concluida_em__isnull=True, iniciada_em__isnull=False)
+
+    def concluidas(self):
+        return self.filter(concluida_em__isnull=False)
+
+    def com_peso_da_prioridade(self):
+        """Anota `peso_prioridade` (0 = alta, 2 = baixa) para ordenar pela prioridade."""
+        return self.annotate(peso_prioridade=models.Case(
+            *(models.When(prioridade=valor, then=peso) for peso, (valor, _) in enumerate(Tarefa.PRIORIDADES)),
+            default=1,
+            output_field=models.IntegerField(),
+        ))
+
 
 class Tarefa(models.Model):
+    # Da mais para a menos urgente: a ordem define o peso usado para ordenar
+    PRIORIDADES = [
+        ('alta', 'Alta'),
+        ('media', 'Média'),
+        ('baixa', 'Baixa'),
+    ]
+    SITUACOES = [
+        ('a_fazer', 'A fazer'),
+        ('em_andamento', 'Em andamento'),
+        ('concluida', 'Concluída'),
+    ]
+
     titulo = models.CharField(max_length=100)
     criada_em = models.DateTimeField(auto_now_add=True)
     prazo = models.DateTimeField()
+    prioridade = models.CharField(max_length=5, choices=PRIORIDADES, default='media')
+    iniciada_em = models.DateTimeField(null=True, blank=True)
     concluida_em = models.DateTimeField(null=True, blank=True)
     lembrete_enviado_em = models.DateTimeField(null=True, blank=True, editable=False)
     pessoa_responsavel = models.ForeignKey(Responsavel, on_delete=models.PROTECT)
@@ -150,6 +184,37 @@ class Tarefa(models.Model):
     @property
     def atrasada(self):
         return self.concluida_em is None and self.prazo < timezone.now()
+
+    @property
+    def situacao(self):
+        if self.concluida_em:
+            return 'concluida'
+        return 'em_andamento' if self.iniciada_em else 'a_fazer'
+
+    def get_situacao_display(self):
+        return dict(self.SITUACOES)[self.situacao]
+
+    def mudar_situacao(self, nova):
+        """Leva a tarefa para `nova` e devolve a ação para o histórico, ou None se nada mudou.
+
+        Não salva: quem chama faz save(update_fields=['iniciada_em', 'concluida_em']).
+        """
+        if nova not in dict(self.SITUACOES):
+            raise ValueError(f'Situação desconhecida: {nova}')
+        antiga = self.situacao
+        if nova == antiga:
+            return None
+        agora = timezone.now()
+        if nova == 'concluida':
+            self.concluida_em = agora
+            return 'concluiu'
+        self.concluida_em = None
+        if nova == 'em_andamento':
+            # Quem reabre uma tarefa que já tinha sido iniciada mantém a data de início
+            self.iniciada_em = self.iniciada_em or agora
+            return 'reabriu' if antiga == 'concluida' else 'iniciou'
+        self.iniciada_em = None
+        return 'reabriu' if antiga == 'concluida' else 'voltou'
 
     @property
     def progresso(self):
@@ -251,3 +316,51 @@ class RegistroTempo(models.Model):
 
     def __str__(self):
         return f'{self.horas}h por {self.responsavel} em {self.data:%d/%m/%Y}'
+
+
+class Atividade(models.Model):
+    """Linha do histórico de uma tarefa: quem fez o quê e quando."""
+    ACOES = [
+        ('criou', 'Criou a tarefa'),
+        ('editou', 'Editou'),
+        ('iniciou', 'Começou a trabalhar na tarefa'),
+        ('concluiu', 'Concluiu a tarefa'),
+        ('reabriu', 'Reabriu a tarefa'),
+        ('voltou', 'Voltou a tarefa para "A fazer"'),
+        ('adicionou', 'Adicionou'),
+        ('removeu', 'Removeu'),
+        ('marcou', 'Marcou'),
+        ('desmarcou', 'Desmarcou'),
+    ]
+
+    tarefa = models.ForeignKey(Tarefa, on_delete=models.CASCADE, related_name='atividades')
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+',
+    )
+    acao = models.CharField(max_length=10, choices=ACOES)
+    detalhe = models.CharField(max_length=200, blank=True)
+    criada_em = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        verbose_name = 'Atividade'
+        verbose_name_plural = 'Atividades'
+        ordering = ['-criada_em', '-pk']
+
+    def __str__(self):
+        return f'{self.tarefa}: {self.texto}'
+
+    @property
+    def texto(self):
+        """Frase pronta para a tela, ex.: "Editou: título, prazo" ou "Adicionou a subtarefa “X”"."""
+        rotulo = self.get_acao_display()
+        if not self.detalhe:
+            return rotulo
+        separador = ': ' if self.acao == 'editou' else ' '
+        return f'{rotulo}{separador}{self.detalhe}'
+
+
+def registrar_atividade(tarefa, usuario, acao, detalhe=''):
+    """Grava uma linha no histórico. `usuario` pode ser anônimo (vira None)."""
+    if usuario is not None and not usuario.is_authenticated:
+        usuario = None
+    return Atividade.objects.create(tarefa=tarefa, usuario=usuario, acao=acao, detalhe=detalhe[:200])

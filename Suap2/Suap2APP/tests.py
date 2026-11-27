@@ -10,12 +10,13 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.db import IntegrityError, transaction
 from django.test import TestCase, override_settings
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 
-from .forms import ProjetoForm, RegistroTempoForm, ResponsavelForm, TarefaForm
+from .forms import ProjetoForm, RegistroTempoForm, ResponsavelForm, TarefaForm, TarefaRapidaForm
 from .models import (
     Anexo,
+    Atividade,
     Categoria,
     Comentario,
     Departamento,
@@ -25,6 +26,7 @@ from .models import (
     Responsavel,
     Subtarefa,
     Tarefa,
+    registrar_atividade,
 )
 
 CPF_VALIDO = '529.982.247-25'
@@ -809,14 +811,17 @@ class TarefaDetalheTests(BaseTestCase):
             Subtarefa.objects.create(tarefa=self.tarefa, descricao=f'Passo {i}')
             Comentario.objects.create(tarefa=self.tarefa, autor=self.responsavel, texto=f'Nota {i}')
             RegistroTempo.objects.create(tarefa=self.tarefa, responsavel=self.responsavel, horas=Decimal('1'))
+            registrar_atividade(self.tarefa, self.usuario, 'editou', 'título')
 
-        with self.assertNumQueries(12) as consultas:
+        # 12 de antes + 1 para o histórico (com o usuário de cada linha no mesmo SELECT)
+        with self.assertNumQueries(13) as consultas:
             self.client.get(self.url)
 
         for i in range(3, 9):
             Subtarefa.objects.create(tarefa=self.tarefa, descricao=f'Passo {i}')
             Comentario.objects.create(tarefa=self.tarefa, autor=self.responsavel, texto=f'Nota {i}')
             RegistroTempo.objects.create(tarefa=self.tarefa, responsavel=self.responsavel, horas=Decimal('1'))
+            registrar_atividade(self.tarefa, self.usuario, 'editou', 'título')
 
         with self.assertNumQueries(len(consultas)):
             self.client.get(self.url)
@@ -930,7 +935,7 @@ class FixtureDeExemploTests(TestCase):
 
         for modelo in (
             Departamento, Responsavel, Projeto, Categoria, Etiqueta,
-            Tarefa, Subtarefa, Comentario, RegistroTempo,
+            Tarefa, Subtarefa, Comentario, RegistroTempo, Atividade,
         ):
             with self.subTest(modelo=modelo.__name__):
                 self.assertTrue(modelo.objects.exists())
@@ -1023,3 +1028,417 @@ class TodasAsPaginasAbremTests(TestCase):
                 response = self.client.get(reverse('tarefa_list'), {parametro: valor})
                 self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(subtarefa)
+
+
+# Prioridade, situação "em andamento", quadro, calendário, histórico e adição rápida
+
+class PrioridadeTests(BaseTestCase):
+    def test_tarefa_nova_comeca_com_prioridade_media(self):
+        self.assertEqual(self.criar_tarefa().prioridade, 'media')
+
+    def test_criar_com_prioridade(self):
+        self.client.post(reverse('tarefa_create'), {
+            'titulo': 'Urgente',
+            'prazo': '2030-01-01T10:00',
+            'prioridade': 'alta',
+            'pessoa_responsavel': self.responsavel.pk,
+        })
+        self.assertEqual(Tarefa.objects.get(titulo='Urgente').prioridade, 'alta')
+
+    def test_editar_sem_mandar_prioridade_mantem_a_atual(self):
+        tarefa = self.criar_tarefa(prioridade='baixa')
+        self.client.post(reverse('tarefa_update', args=[tarefa.pk]), {
+            'titulo': 'Editada',
+            'prazo': '2030-01-01T10:00',
+            'pessoa_responsavel': self.responsavel.pk,
+        })
+        tarefa.refresh_from_db()
+        self.assertEqual((tarefa.titulo, tarefa.prioridade), ('Editada', 'baixa'))
+
+    def titulos(self, **params):
+        response = self.client.get(reverse('tarefa_list'), params)
+        return [t.titulo for t in response.context['tarefas']]
+
+    def test_filtro_por_prioridade(self):
+        self.criar_tarefa('Alta', prioridade='alta')
+        self.criar_tarefa('Baixa', prioridade='baixa')
+        self.assertEqual(self.titulos(prioridade='alta'), ['Alta'])
+
+    def test_ordenar_por_prioridade_mantem_concluidas_no_fim(self):
+        self.criar_tarefa('media cedo', dias=1)
+        self.criar_tarefa('baixa', dias=2, prioridade='baixa')
+        self.criar_tarefa('alta tarde', dias=9, prioridade='alta')
+        self.criar_tarefa('alta feita', dias=-1, prioridade='alta', concluida_em=timezone.now())
+
+        self.assertEqual(self.titulos(ordenar='prioridade'), ['alta tarde', 'media cedo', 'baixa', 'alta feita'])
+        self.assertEqual(self.titulos(), ['media cedo', 'baixa', 'alta tarde', 'alta feita'])
+
+    def test_lista_mostra_a_prioridade(self):
+        self.criar_tarefa(prioridade='alta')
+        response = self.client.get(reverse('tarefa_list'))
+        self.assertContains(response, 'prioridade-texto-alta')
+
+
+class SituacaoTests(BaseTestCase):
+    def test_situacao_e_helpers_do_queryset(self):
+        a_fazer = self.criar_tarefa('a fazer')
+        andamento = self.criar_tarefa('andamento', iniciada_em=timezone.now())
+        feita = self.criar_tarefa('feita', iniciada_em=timezone.now(), concluida_em=timezone.now())
+
+        self.assertEqual(
+            [a_fazer.situacao, andamento.situacao, feita.situacao], ['a_fazer', 'em_andamento', 'concluida'],
+        )
+        self.assertEqual(list(Tarefa.objects.a_fazer()), [a_fazer])
+        self.assertEqual(list(Tarefa.objects.em_andamento()), [andamento])
+        self.assertEqual(list(Tarefa.objects.concluidas()), [feita])
+
+    def test_mudar_situacao(self):
+        tarefa = self.criar_tarefa()
+        self.assertEqual(tarefa.mudar_situacao('em_andamento'), 'iniciou')
+        inicio = tarefa.iniciada_em
+        self.assertIsNotNone(inicio)
+        self.assertIsNone(tarefa.mudar_situacao('em_andamento'))
+        self.assertEqual(tarefa.mudar_situacao('concluida'), 'concluiu')
+        self.assertEqual(tarefa.mudar_situacao('em_andamento'), 'reabriu')
+        self.assertEqual(tarefa.iniciada_em, inicio)  # reabrir não reinicia a contagem
+        self.assertEqual(tarefa.mudar_situacao('a_fazer'), 'voltou')
+        self.assertIsNone(tarefa.iniciada_em)
+        tarefa.mudar_situacao('concluida')
+        self.assertEqual(tarefa.mudar_situacao('a_fazer'), 'reabriu')
+
+    def test_situacao_desconhecida(self):
+        with self.assertRaises(ValueError):
+            self.criar_tarefa().mudar_situacao('arquivada')
+
+    def test_filtros_de_situacao(self):
+        self.criar_tarefa('a fazer')
+        self.criar_tarefa('andamento', iniciada_em=timezone.now())
+        response = self.client.get(reverse('tarefa_list'), {'status': 'em_andamento'})
+        self.assertEqual([t.titulo for t in response.context['tarefas']], ['andamento'])
+        response = self.client.get(reverse('tarefa_list'), {'status': 'a_fazer'})
+        self.assertEqual([t.titulo for t in response.context['tarefas']], ['a fazer'])
+        self.assertEqual(response.context['em_andamento'], 1)
+
+    def test_reabrir_volta_para_em_andamento_se_ja_tinha_comecado(self):
+        tarefa = self.criar_tarefa(iniciada_em=timezone.now(), concluida_em=timezone.now())
+        self.client.post(reverse('tarefa_toggle', args=[tarefa.pk]))
+        tarefa.refresh_from_db()
+        self.assertEqual(tarefa.situacao, 'em_andamento')
+
+
+class MoverTarefaTests(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.tarefa = self.criar_tarefa()
+        self.url = reverse('tarefa_mover', args=[self.tarefa.pk])
+
+    def test_exige_post_e_login(self):
+        self.assertEqual(self.client.get(self.url).status_code, 405)
+        self.client.logout()
+        response = self.client.post(self.url, {'situacao': 'concluida'})
+        self.assertRedirects(response, f"{reverse('login')}?next={self.url}", fetch_redirect_response=False)
+
+    def test_pedido_do_quadro_recebe_json(self):
+        response = self.client.post(
+            self.url, {'situacao': 'em_andamento'}, headers={'Accept': 'application/json'},
+        )
+        self.assertEqual(response.json(), {'ok': True, 'situacao': 'em_andamento', 'rotulo': 'Em andamento'})
+        self.tarefa.refresh_from_db()
+        self.assertEqual(self.tarefa.situacao, 'em_andamento')
+        atividade = self.tarefa.atividades.get()
+        self.assertEqual((atividade.acao, atividade.usuario), ('iniciou', self.usuario))
+
+    def test_formulario_sem_javascript_volta_para_a_pagina(self):
+        response = self.client.post(self.url, {'situacao': 'concluida'})
+        self.assertRedirects(response, reverse('quadro'))
+        destino = reverse('quadro') + '?prioridade=alta'
+        response = self.client.post(self.url, {'situacao': 'a_fazer', 'next': destino})
+        self.assertRedirects(response, destino)
+        response = self.client.post(self.url, {'situacao': 'a_fazer', 'next': 'https://exemplo.com/'})
+        self.assertRedirects(response, reverse('quadro'))
+
+    def test_situacao_invalida(self):
+        self.assertEqual(self.client.post(self.url, {'situacao': 'xyz'}).status_code, 400)
+
+    def test_mesma_situacao_nao_vai_para_o_historico(self):
+        self.client.post(self.url, {'situacao': 'a_fazer'})
+        self.assertFalse(self.tarefa.atividades.exists())
+
+
+class HistoricoTests(BaseTestCase):
+    def acoes(self, tarefa):
+        return [(a.acao, a.detalhe) for a in tarefa.atividades.order_by('pk')]
+
+    def test_criar_e_editar(self):
+        self.client.post(reverse('tarefa_create'), {
+            'titulo': 'Nova', 'prazo': '2030-01-01T10:00', 'pessoa_responsavel': self.responsavel.pk,
+        })
+        tarefa = Tarefa.objects.get(titulo='Nova')
+        dados = {'titulo': 'Outra', 'prazo': '2030-01-01T10:00', 'pessoa_responsavel': self.responsavel.pk}
+        self.client.post(reverse('tarefa_update', args=[tarefa.pk]), dados)
+        # Salvar sem mudar nada não suja o histórico
+        self.client.post(reverse('tarefa_update', args=[tarefa.pk]), dados)
+
+        self.assertEqual(self.acoes(tarefa), [('criou', ''), ('editou', 'título')])
+        self.assertEqual(tarefa.atividades.first().usuario, self.usuario)
+
+    def test_concluir_e_reabrir(self):
+        tarefa = self.criar_tarefa()
+        url = reverse('tarefa_toggle', args=[tarefa.pk])
+        self.client.post(url)
+        self.client.post(url)
+        self.assertEqual(self.acoes(tarefa), [('concluiu', ''), ('reabriu', '')])
+
+    def test_itens_da_tarefa(self):
+        tarefa = self.criar_tarefa()
+        url = reverse('tarefa_detail', args=[tarefa.pk])
+        self.client.post(url, {'acao': 'subtarefa', 'descricao': 'Ligar'})
+        subtarefa = tarefa.subtarefas.get()
+        self.client.post(reverse('subtarefa_toggle', args=[subtarefa.pk]))
+        self.client.post(url, {
+            'acao': 'registro', 'responsavel': self.responsavel.pk, 'horas': '1.5', 'data': '2030-01-01',
+        })
+        self.client.post(reverse('item_delete', args=['subtarefa', subtarefa.pk]))
+
+        self.assertEqual(self.acoes(tarefa), [
+            ('adicionou', 'a subtarefa “Ligar”'),
+            ('marcou', '“Ligar” no checklist'),
+            ('adicionou', '1,50 h de trabalho de Ana'),
+            ('removeu', 'a subtarefa “Ligar”'),
+        ])
+
+    def test_aparece_na_tela_da_tarefa(self):
+        tarefa = self.criar_tarefa()
+        registrar_atividade(tarefa, self.usuario, 'editou', 'título, prazo')
+        response = self.client.get(reverse('tarefa_detail', args=[tarefa.pk]))
+        self.assertContains(response, 'Editou: título, prazo')
+        self.assertContains(response, 'ana ·')
+
+    def test_usuario_excluido_vira_alguem(self):
+        tarefa = self.criar_tarefa()
+        outro = User.objects.create_user('beto')
+        registrar_atividade(tarefa, outro, 'concluiu')
+        outro.delete()
+        atividade = Atividade.objects.get()
+        self.assertIsNone(atividade.usuario)
+        self.assertContains(self.client.get(reverse('tarefa_detail', args=[tarefa.pk])), 'Alguém ·')
+
+
+class QuadroTests(BaseTestCase):
+    def colunas(self, **params):
+        response = self.client.get(reverse('quadro'), params)
+        return {c['situacao']: [t.titulo for t in c['tarefas']] for c in response.context['colunas']}
+
+    def test_separa_por_situacao_e_ordena_por_prioridade(self):
+        agora = timezone.now()
+        self.criar_tarefa('media', dias=1)
+        self.criar_tarefa('alta', dias=5, prioridade='alta')
+        self.criar_tarefa('andamento', iniciada_em=agora)
+        self.criar_tarefa('feita ontem', concluida_em=agora - timedelta(days=1))
+        self.criar_tarefa('feita hoje', concluida_em=agora)
+        self.criar_tarefa('feita faz tempo', concluida_em=agora - timedelta(days=40))
+
+        self.assertEqual(self.colunas(), {
+            'a_fazer': ['alta', 'media'],
+            'em_andamento': ['andamento'],
+            'concluida': ['feita hoje', 'feita ontem'],
+        })
+
+    def test_filtros(self):
+        outro = Responsavel.objects.create(nome='Bia', cpf='111.444.777-35')
+        self.criar_tarefa('da Ana')
+        Tarefa.objects.create(titulo='da Bia', prazo=timezone.now(), pessoa_responsavel=outro)
+        self.assertEqual(self.colunas(responsavel=outro.pk)['a_fazer'], ['da Bia'])
+
+    def test_setas_apontam_para_as_colunas_vizinhas(self):
+        response = self.client.get(reverse('quadro'))
+        vizinhas = [(c['anterior'], c['proxima']) for c in response.context['colunas']]
+        self.assertEqual(vizinhas, [('', 'em_andamento'), ('a_fazer', 'concluida'), ('em_andamento', '')])
+
+    def test_consultas_nao_crescem_com_tarefas(self):
+        self.criar_tarefa()
+        # sessão, usuário, as 3 opções de filtro usadas na tela e as tarefas com os prefetch de etiquetas e subtarefas
+        with self.assertNumQueries(8) as consultas:
+            self.client.get(reverse('quadro'))
+        for dias in range(8):
+            self.criar_tarefa(dias=dias, iniciada_em=timezone.now() if dias % 2 else None)
+        with self.assertNumQueries(len(consultas)):
+            self.client.get(reverse('quadro'))
+
+
+class CalendarioTests(BaseTestCase):
+    def tarefa_em(self, titulo, ano, mes, dia, hora=10):
+        return Tarefa.objects.create(
+            titulo=titulo,
+            prazo=timezone.make_aware(datetime(ano, mes, dia, hora)),
+            pessoa_responsavel=self.responsavel,
+        )
+
+    def test_tarefa_aparece_no_dia_do_prazo(self):
+        self.tarefa_em('Reunião', 2030, 3, 15)
+        response = self.client.get(reverse('calendario'), {'mes': '2030-03'})
+
+        dias = {dia['data']: dia for semana in response.context['semanas'] for dia in semana}
+        self.assertEqual([t.titulo for t in dias[date(2030, 3, 15)]['tarefas']], ['Reunião'])
+        self.assertEqual([d['data'] for d in response.context['agenda']], [date(2030, 3, 15)])
+        self.assertContains(response, 'Março de 2030')
+
+    def test_hora_local_decide_o_dia(self):
+        # 23h30 em Cuiabá já é o dia seguinte em UTC; o calendário segue a hora local
+        self.tarefa_em('Tarde da noite', 2030, 3, 15, hora=23)
+        response = self.client.get(reverse('calendario'), {'mes': '2030-03'})
+        self.assertEqual(response.context['agenda'][0]['data'], date(2030, 3, 15))
+
+    def test_semanas_completas_comecando_no_domingo(self):
+        response = self.client.get(reverse('calendario'), {'mes': '2030-03'})
+        semanas = response.context['semanas']
+        self.assertEqual(semanas[0][0]['data'].weekday(), 6)
+        self.assertTrue(all(len(semana) == 7 for semana in semanas))
+        self.assertTrue(semanas[0][0]['fora'])  # 24/02, do mês anterior
+
+    def test_navegacao_entre_meses(self):
+        response = self.client.get(reverse('calendario'), {'mes': '2030-01'})
+        self.assertEqual((response.context['mes_anterior'], response.context['mes_proximo']), ('2029-12', '2030-02'))
+
+    def test_mes_invalido_mostra_o_mes_atual(self):
+        for valor in ('2030-13', 'abc', ''):
+            with self.subTest(mes=valor):
+                response = self.client.get(reverse('calendario'), {'mes': valor})
+                self.assertEqual(response.context['mes'], timezone.localdate().replace(day=1))
+
+    def test_consultas_nao_crescem_com_tarefas(self):
+        self.tarefa_em('Uma', 2030, 3, 1)
+        # sessão, usuário, as 3 opções de filtro usadas na tela e as tarefas do mês
+        with self.assertNumQueries(6) as consultas:
+            self.client.get(reverse('calendario'), {'mes': '2030-03'})
+        for dia in range(2, 20):
+            self.tarefa_em(f'Tarefa {dia}', 2030, 3, dia)
+        with self.assertNumQueries(len(consultas)):
+            self.client.get(reverse('calendario'), {'mes': '2030-03'})
+
+
+class TarefaRapidaFormTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.ana = Responsavel.objects.create(nome='Ana Souza', cpf=CPF_VALIDO)
+        cls.joao = Responsavel.objects.create(nome='João Pedro', cpf='111.444.777-35')
+        cls.joana = Responsavel.objects.create(nome='Joana Lima', cpf='390.533.447-05')
+        cls.urgente = Etiqueta.objects.create(nome='urgente')
+
+    def form(self, texto, **dados):
+        return TarefaRapidaForm({'texto': texto, **dados})
+
+    def test_so_o_titulo_usa_o_responsavel_da_lista_e_amanha_as_17h(self):
+        form = self.form('Comprar toner', pessoa_responsavel=self.ana.pk)
+        self.assertTrue(form.is_valid(), form.errors)
+        tarefa = form.save()
+        prazo = timezone.localtime(tarefa.prazo)
+        self.assertEqual(tarefa.titulo, 'Comprar toner')
+        self.assertEqual(tarefa.pessoa_responsavel, self.ana)
+        self.assertEqual(tarefa.prioridade, 'media')
+        self.assertEqual((prazo.date(), prazo.hour, prazo.minute), (timezone.localdate() + timedelta(days=1), 17, 0))
+
+    def test_pedacos_especiais_saem_do_titulo(self):
+        form = self.form('Ligar para o fornecedor @ana #Urgente !alta amanhã 14h30')
+        self.assertTrue(form.is_valid(), form.errors)
+        tarefa = form.save()
+        prazo = timezone.localtime(tarefa.prazo)
+        self.assertEqual(tarefa.titulo, 'Ligar para o fornecedor')
+        self.assertEqual(tarefa.pessoa_responsavel, self.ana)
+        self.assertEqual(tarefa.prioridade, 'alta')
+        self.assertEqual(list(tarefa.etiquetas.all()), [self.urgente])
+        self.assertEqual((prazo.date(), prazo.hour, prazo.minute), (timezone.localdate() + timedelta(days=1), 14, 30))
+
+    def test_nome_sem_acento_e_por_sobrenome(self):
+        for texto, esperado in (('Teste @joao', self.joao), ('Teste @lima', self.joana)):
+            with self.subTest(texto=texto):
+                form = self.form(texto)
+                self.assertTrue(form.is_valid(), form.errors)
+                self.assertEqual(form.cleaned_data['responsavel'], esperado)
+
+    def test_data_com_e_sem_ano(self):
+        form = self.form('Prova @ana 10/12/2031 8:00')
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(timezone.localtime(form.cleaned_data['prazo']).replace(tzinfo=None), datetime(2031, 12, 10, 8, 0))
+
+        ontem = timezone.localdate() - timedelta(days=1)
+        form = self.form(f'Prova @ana {ontem:%d/%m}')
+        self.assertTrue(form.is_valid(), form.errors)
+        if ontem.year == timezone.localdate().year:
+            # Sem ano, um dia que já passou é o do ano que vem
+            self.assertEqual(timezone.localtime(form.cleaned_data['prazo']).year, ontem.year + 1)
+
+    def test_prazo_do_campo_quando_o_texto_nao_tem_dia(self):
+        form = self.form('Prova @ana', prazo='2031-05-04T09:15')
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(timezone.localtime(form.cleaned_data['prazo']).replace(tzinfo=None), datetime(2031, 5, 4, 9, 15))
+
+    def assertErro(self, texto, trecho, **dados):
+        form = self.form(texto, **dados)
+        self.assertFalse(form.is_valid())
+        self.assertIn(trecho, ' '.join(e for erros in form.errors.values() for e in erros))
+
+    def test_erros(self):
+        self.assertErro('Teste @jo', 'Mais de um responsável combina com @jo')
+        self.assertErro('Teste @zé', 'Nenhum responsável combina com @zé')
+        self.assertErro('Teste @ana #inexistente', 'A etiqueta #inexistente não existe')
+        self.assertErro('Teste', 'Escolha o responsável')
+        self.assertErro('@ana amanhã', 'Escreva o que precisa ser feito')
+        self.assertErro('Teste @ana 31/02', 'Data inválida')
+        self.assertErro('Teste @ana 25h', 'Hora inválida')
+        self.assertErro('x' * 101 + ' @ana', 'passa de 100 caracteres')
+
+
+class TarefaRapidaViewTests(BaseTestCase):
+    url = reverse_lazy('tarefa_rapida')
+
+    def test_get_devolve_o_formulario(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, 'data-form-rapida')
+        self.assertNotContains(response, '<html')
+
+    def test_cria_e_responde_json(self):
+        response = self.client.post(
+            self.url, {'texto': 'Comprar toner @ana !alta'}, headers={'Accept': 'application/json'},
+        )
+        dados = response.json()
+        tarefa = Tarefa.objects.get(titulo='Comprar toner')
+        self.assertTrue(dados['ok'])
+        self.assertEqual(dados['url'], tarefa.get_absolute_url())
+        self.assertEqual(tarefa.prioridade, 'alta')
+        atividade = tarefa.atividades.get()
+        self.assertEqual((atividade.acao, atividade.detalhe, atividade.usuario), ('criou', 'pela adição rápida', self.usuario))
+
+    def test_erro_em_json(self):
+        response = self.client.post(self.url, {'texto': 'Sem dono'}, headers={'Accept': 'application/json'})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {'ok': False, 'erros': ['Escolha o responsável ou escreva @nome no texto.']})
+        self.assertFalse(Tarefa.objects.exists())
+
+    def test_sem_javascript_volta_para_a_pagina_com_mensagem(self):
+        destino = reverse('quadro')
+        response = self.client.post(self.url, {'texto': 'Comprar toner @ana', 'next': destino}, follow=True)
+        self.assertRedirects(response, destino)
+        self.assertContains(response, 'Tarefa &quot;Comprar toner&quot; criada para Ana')
+
+    def test_exige_login(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertRedirects(response, f"{reverse('login')}?next={self.url}", fetch_redirect_response=False)
+
+
+class TelasNovasTests(TestCase):
+    fixtures = ['exemplos']
+
+    def test_exigem_login(self):
+        for nome in ('quadro', 'calendario', 'tarefa_rapida'):
+            with self.subTest(url=nome):
+                url = reverse(nome)
+                self.assertRedirects(self.client.get(url), f"{reverse('login')}?next={url}")
+
+    def test_abrem_com_os_dados_de_exemplo(self):
+        self.client.force_login(User.objects.create_user('ana', password='senha-forte-123'))
+        for url in (reverse('quadro'), reverse('calendario'), reverse('calendario') + '?mes=2026-09',
+                    reverse('tarefa_rapida'), reverse('tarefa_list') + '?ordenar=prioridade&status=em_andamento'):
+            with self.subTest(url=url):
+                self.assertEqual(self.client.get(url).status_code, 200)

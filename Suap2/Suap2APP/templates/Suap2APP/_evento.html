@@ -1,0 +1,3 @@
+<a class="evento {% if tarefa.concluida_em %}cor-{{ tarefa.categoria.cor|default:'cinza' }} evento-concluida{% elif tarefa.prazo < now %}evento-atrasada{% else %}cor-{{ tarefa.categoria.cor|default:'cinza' }}{% endif %}"
+   href="{% url 'tarefa_detail' tarefa.pk %}"
+   title="{{ tarefa.titulo }} · {{ tarefa.prazo|date:'d/m H:i' }} · {{ tarefa.pessoa_responsavel.nome }}"><span class="evento-hora">{{ tarefa.prazo|date:"H:i" }}</span> {{ tarefa.titulo }}</a>

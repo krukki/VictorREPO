@@ -37,17 +37,18 @@ python manage.py changepassword <usuario>
 O `db.sqlite3` é versionado (não está no `.gitignore`), então os dados de exemplo já estão
 lá quando você clona. Eles também existem como *fixture*: um arquivo JSON em
 `Suap2APP/fixtures/exemplos.json` com 3 departamentos, 5 responsáveis, 3 projetos, 4
-categorias, 4 etiquetas, 5 tarefas e os itens delas (subtarefas, comentários e horas
-apontadas). Para recarregá-los em um banco vazio:
+categorias, 4 etiquetas, 8 tarefas, os itens delas (subtarefas, comentários e horas
+apontadas) e o histórico de cada uma. Para recarregá-los em um banco vazio:
 
 ```powershell
 python manage.py loaddata exemplos
 ```
 
-As tarefas de exemplo cobrem os três estados (pendente, atrasada e concluída) e um dos
+As tarefas de exemplo cobrem as situações (a fazer, em andamento, atrasada e concluída) e
+as três prioridades, e um dos
 responsáveis está sem e-mail de propósito, para você ver como o comando de lembretes
-ignora esse caso. Os prazos são datas fixas de setembro/outubro de 2026 — com o tempo
-todas vão aparecer como atrasadas; é só editar o JSON quando isso incomodar.
+ignora esse caso. Os prazos são datas fixas entre setembro e dezembro de 2026 — com o
+tempo todas vão aparecer como atrasadas; é só editar o JSON quando isso incomodar.
 
 A fixture **não traz anexos**: eles dependeriam de arquivos de verdade em `MEDIA_ROOT`, que
 não têm por que ir para o Git. Para ver a tela de anexos funcionando, envie um arquivo
@@ -65,13 +66,13 @@ duas pastas com nomes parecidos, e vale não confundir:
 | `Suap2/manage.py` | Porta de entrada de todo comando (`runserver`, `migrate`, `test`…) |
 | `Suap2/Suap2/settings.py` | Configuração: banco, idioma, fuso, e-mail, login |
 | `Suap2/Suap2/urls.py` | Todas as rotas do site (não há `urls.py` dentro do app) |
-| `Suap2/Suap2APP/models.py` | As dez tabelas (veja a seção 2) |
+| `Suap2/Suap2APP/models.py` | As onze tabelas (veja a seção 2) |
 | `Suap2/Suap2APP/views.py` | A lógica de cada tela |
-| `Suap2/Suap2APP/forms.py` | Formulários de cadastro e o formulário de filtros |
+| `Suap2/Suap2APP/forms.py` | Formulários de cadastro, o de filtros e o da adição rápida |
 | `Suap2/Suap2APP/admin.py` | Como as tabelas aparecem no `/admin` |
 | `Suap2/Suap2APP/templates/Suap2APP/` | O HTML |
-| `Suap2/Suap2APP/static/Suap2APP/css/` | O CSS do tema, no estilo dos sites da era Windows Vista, sem framework: `tokens.css` (cores, raios, sombras), `base.css` (fundo azul com aurora, tipografia), `components.css` (botões, campos, cards…) e `pages.css` (layout de cada tela) |
-| `Suap2/Suap2APP/static/Suap2APP/js/aero.js` | O único JavaScript: o botão de fechar das mensagens. O site funciona sem ele |
+| `Suap2/Suap2APP/static/Suap2APP/style.css` | Todo o CSS, com o tema claro e o escuro (arquivo único, sem framework) |
+| `Suap2/Suap2APP/static/Suap2APP/app.js` | O pouco de JavaScript: tema, quadro, adição rápida e atalhos (seção 9) |
 | `Suap2/Suap2APP/fixtures/exemplos.json` | Dados de exemplo (`loaddata exemplos`) |
 | `Suap2/media/` | Os anexos enviados; fora do Git |
 | `Suap2/Suap2APP/management/commands/enviar_lembretes.py` | Comando de e-mail |
@@ -89,9 +90,9 @@ Configurações que merecem atenção em `settings.py`:
 
 ---
 
-## 2. Os dez modelos (`Suap2APP/models.py`)
+## 2. Os onze modelos (`Suap2APP/models.py`)
 
-`Tarefa` é o centro de tudo. Os outros nove existem em três papéis diferentes, e **essa
+`Tarefa` é o centro de tudo. Os outros dez existem em quatro papéis diferentes, e **essa
 distinção explica o desenho de quase todo o resto do projeto**:
 
 | Papel | Modelos | Como se ligam à tarefa | Tela própria? |
@@ -99,6 +100,7 @@ distinção explica o desenho de quase todo o resto do projeto**:
 | Quem faz | `Departamento`, `Responsavel` | `Tarefa.pessoa_responsavel` (PROTECT) | sim, menu "Responsáveis" e "Cadastros" |
 | Como classificar | `Projeto`, `Categoria`, `Etiqueta` | FK ou M2M, todos opcionais | sim, menu "Projetos" e "Cadastros" |
 | O que vive dentro | `Subtarefa`, `Comentario`, `Anexo`, `RegistroTempo` | FK obrigatória para `Tarefa`, com CASCADE | não: aparecem na tela da tarefa |
+| O que aconteceu | `Atividade` | FK obrigatória para `Tarefa`, com CASCADE | não: é o "Histórico" na tela da tarefa (seção 9) |
 
 Os quatro "de dentro" não têm menu nem CRUD separado de propósito — uma página listando
 todos os comentários do sistema não serviria para nada. Eles nascem e morrem na tela da
@@ -174,8 +176,9 @@ linha de ligação.
 
 ### `Tarefa`
 
-Campos: `titulo`, `criada_em`, `prazo`, `concluida_em`, `lembrete_enviado_em`,
-`pessoa_responsavel`, `projeto`, `categoria`, `etiquetas`.
+Campos: `titulo`, `criada_em`, `prazo`, `prioridade`, `iniciada_em`, `concluida_em`,
+`lembrete_enviado_em`, `pessoa_responsavel`, `projeto`, `categoria`, `etiquetas`.
+(`prioridade` e `iniciada_em` são explicados na seção 9.)
 
 Três decisões importantes:
 
@@ -500,6 +503,10 @@ Faz duas coisas:
 | `/tarefas/<pk>/editar/` | `TarefaUpdateView` | `tarefa_update` |
 | `/tarefas/<pk>/excluir/` | `TarefaDeleteView` | `tarefa_delete` |
 | `/tarefas/<pk>/concluir/` | `tarefa_toggle` (só POST) | `tarefa_toggle` |
+| `/tarefas/<pk>/mover/` | `tarefa_mover` (só POST) | `tarefa_mover` |
+| `/tarefas/rapida/` | `tarefa_rapida` (GET devolve o formulário, POST cria) | `tarefa_rapida` |
+| `/quadro/` | `QuadroView` | `quadro` |
+| `/calendario/` | `CalendarioView` (`?mes=AAAA-MM`) | `calendario` |
 | `/subtarefas/<pk>/concluir/` | `subtarefa_toggle` (só POST) | `subtarefa_toggle` |
 | `/itens/<tipo>/<pk>/excluir/` | `item_delete` (só POST) | `item_delete` |
 | `/responsaveis/…` | as cinco views de `Responsavel` | `responsavel_list`, `_create`, `_detail`, `_update`, `_delete` |
@@ -523,21 +530,13 @@ isso é o servidor web; o Django nem registra a rota.
 
 ### Templates
 
-- `base.html` — o esqueleto. Todos os outros templates fazem `{% extends %}` dele e
-  preenchem os blocos `title`, `content` e, se precisarem, `body_class` (o login usa
-  `pagina-centro` para a janela estreita), `extra_css` e `extra_js`. Ele mesmo só junta
-  os parciais:
-  - `_topo.html` — o nome "Suap2" sobre o fundo azul e, para quem está logado, o
-    usuário, o Sair e a caixa de busca (ela só manda `?q=` para a lista de tarefas).
-  - `_navbar.html` — a barra preta do menu e a faixa clara dos cadastros, no alto da
-    janela, só para quem está logado. Marca o link da seção atual com
-    `aria-current` olhando o começo do nome da URL (`tarefa_detail` começa com `tarefa_`,
-    então acende "Tarefas").
-  - `_mensagens.html` — as mensagens do framework de *messages*, uma cor por tipo.
-  - `_icones.html` — um *sprite* SVG com todos os ícones, usados com
-    `<svg><use href="#i-nome"></use></svg>`.
-  - `_fundo.html` — o fundo azul com a aurora verde e ciano no topo, todo em CSS.
-  - `_rodape.html` — o rodapé.
+- `base.html` — o esqueleto: barra verde com o menu (só para quem está logado), as
+  mensagens de sucesso e as janelas de adição rápida e de atalhos. Todos os outros
+  templates fazem `{% extends %}` dele. O bloco `classe_conteudo` deixa uma página mais
+  estreita (`conteudo-estreito`), como fazem os formulários.
+- `_icones.html` — os ícones SVG, desenhados uma vez só e usados com
+  `<svg class="icone"><use href="#i-nome"></use></svg>`.
+- `_prioridade.html` — a bandeirinha colorida da prioridade.
 - `_campo.html` — um campo de formulário completo: rótulo, widget, ajuda e erros. Grupos
   de caixas de seleção viram `<fieldset>` com `<legend>`. `form.html` e `_form_item.html`
   usam este parcial em vez de repetir o HTML.
@@ -608,21 +607,21 @@ terminal. Para enviar de verdade, veja a tabela de variáveis no README.
 |---|---|
 | Adicionar um campo na tarefa | `models.py` → `python manage.py makemigrations` → `fields` do `TarefaForm` → `_tarefa_item.html` → `admin.py` |
 | Novo filtro na lista | `TarefaFiltroForm`: cria o campo **e** o `if` correspondente em `filtrar()`. A barra de filtros se desenha sozinha |
-| Novo cadastro auxiliar (como Categoria) | modelo → migração → form → `FormularioMixin` + `ExclusaoMixin` em `views.py` → 4 rotas → um `_list.html` → link em `_navbar.html` → `admin.py` |
+| Novo cadastro auxiliar (como Categoria) | modelo → migração → form → `FormularioMixin` + `ExclusaoMixin` em `views.py` → 4 rotas → um `_list.html` → link em `base.html` → `admin.py` |
 | Novo tipo de item dentro da tarefa | modelo com FK CASCADE → form sem o campo `tarefa` → uma linha em `TarefaDetailView.FORMULARIOS` e outra em `TIPOS_DE_ITEM` → um bloco em `tarefa_detail.html` |
-| Nova cor de categoria | `Categoria.CORES` **e** a classe `.cor-<nome>` em `css/components.css` |
+| Nova cor de categoria | `Categoria.CORES` **e** a classe `.cor-<nome>` no `style.css` (mais as variáveis `--cat-<nome>-*` dos dois temas) |
 | Mudar o limite de tamanho do anexo | `TAMANHO_MAXIMO_ANEXO` em `forms.py` |
 | Mudar onde os anexos são guardados | `MEDIA_ROOT` em `settings.py`, ou o `upload_to` do `Anexo` |
 | Mudar a ordem da lista | `Meta.ordering` em `models.py` |
 | Mudar quantas tarefas por página | `paginate_by` em `TarefaListView` |
 | Mudar texto/assunto do e-mail | método `enviar()` do comando `enviar_lembretes` |
 | Mudar o prazo do lembrete | `--horas` na hora de rodar, ou o `default=24` em `add_arguments` |
-| Mudar cores, fontes, raios, sombras | as variáveis de `static/Suap2APP/css/tokens.css` |
-| Cores do fundo e da aurora | `--fundo-*` e `--aurora-*` em `tokens.css` |
-| Aurora mais lenta ou rápida | `--aurora-velocidade` em `tokens.css` (2 = metade da velocidade) |
-| Cores dos botões | as variáveis `--b1` a `--b4` de cada `.btn-*` em `css/components.css` |
+| Mudar cores, fontes, espaçamento | as variáveis no topo do `static/Suap2APP/style.css` (o tema escuro repete a lista com os valores escuros) |
+| Mudar quantos dias de concluídas o quadro mostra | `DIAS_DE_CONCLUIDAS` em `QuadroView` |
+| Ensinar uma palavra nova à adição rápida | o laço de `TarefaRapidaForm.clean` em `forms.py` |
+| Novo atalho de teclado | o `keydown` em `app.js` **e** a lista em `base.html` (janela de atalhos) |
 | Novo ícone | um `<symbol id="i-nome">` em `_icones.html` |
-| Mudar o menu | `templates/Suap2APP/_navbar.html` |
+| Mudar o menu | `templates/Suap2APP/base.html` |
 | Nova página | view em `views.py` → rota em `Suap2/Suap2/urls.py` → template |
 | Mudar colunas/filtros do `/admin` | `admin.py` |
 
@@ -669,6 +668,14 @@ esperado do sistema:
 | `WidgetsDeDataTests` | Os campos de data saem em ISO no HTML (veja a seção 4) |
 | `FixtureDeExemploTests` | O `loaddata exemplos` funciona e cobre os modelos |
 | `TodasAsPaginasAbremTests` | Passeia por **todas** as telas com os dados de exemplo e cobra HTTP 200 |
+| `PrioridadeTests` | Prioridade padrão, criar/editar, filtro e a ordem "por prioridade" |
+| `SituacaoTests` | As três situações, `mudar_situacao` e o "Reabrir" voltando para onde estava |
+| `MoverTarefaTests` | `tarefa_mover`: só POST, JSON para o quadro, `next`, situação inválida |
+| `HistoricoTests` | O que vai para o histórico (e o que não vai) e como aparece na tela |
+| `QuadroTests` | Colunas, ordem, filtros, setas e número de consultas |
+| `CalendarioTests` | Dia certo pela hora local, semanas completas, navegação, mês inválido, consultas |
+| `TarefaRapidaFormTests` / `TarefaRapidaViewTests` | Cada palavra especial da adição rápida, os erros e as respostas da view |
+| `TelasNovasTests` | Quadro, calendário e adição rápida exigem login e abrem com os dados de exemplo |
 
 `BaseTestCase` no topo do arquivo cria um usuário e um responsável e já faz o login — é
 dele que a maioria das classes herda, junto com o atalho `criar_tarefa()`.
@@ -682,3 +689,105 @@ Vale entender dois tipos de teste que se repetem:
 - **`TodasAsPaginasAbremTests`** não confere conteúdo nenhum, só que cada tela responde
   200 com os dados de exemplo. É uma rede de segurança barata: pega `{% url %}` com nome
   errado, template que não existe e variável que faltou no contexto.
+
+---
+
+## 9. Tema, quadro, calendário, histórico e adição rápida
+
+### O tema e o modo escuro
+
+Todas as cores do site são variáveis CSS declaradas no topo do `style.css` (`--fundo`,
+`--superficie`, `--texto`, `--primaria`…). Nenhuma regra usa uma cor escrita à mão; elas
+sempre leem a variável. O modo escuro é só uma segunda lista de valores para as mesmas
+variáveis, e vale em dois casos:
+
+- a pessoa clicou no botão de lua/sol, e o `app.js` gravou a escolha no `localStorage` e
+  pôs `data-theme="dark"` no `<html>`;
+- a pessoa nunca escolheu e o sistema dela está no modo escuro (`prefers-color-scheme`).
+
+Um `<script>` pequeno no `<head>` do `base.html` aplica a escolha salva antes de a página
+ser desenhada, para ela não piscar clara antes de ficar escura. Os títulos usam a fonte
+Source Serif 4 e o texto a Source Sans 3, do Google Fonts; sem internet, o navegador cai
+para Georgia e para a fonte do sistema.
+
+O menu vira um botão ☰ em telas menores sem JavaScript nenhum: é um `<input type="checkbox">`
+escondido, e o CSS mostra o menu quando ele está marcado. Os filtros também começam
+fechados em telas pequenas (aí sim pelo `app.js`), a não ser que algum esteja em uso.
+
+### Prioridade e a situação "em andamento"
+
+`prioridade` é `alta`, `media` ou `baixa` (padrão `media`). A ordem de `Tarefa.PRIORIDADES`
+define o peso: `TarefaQuerySet.com_peso_da_prioridade()` anota `peso_prioridade` (0 para alta)
+para dar `order_by`. Um formulário de edição que não manda a prioridade mantém a que a tarefa
+já tinha, em vez de voltar para Média.
+
+Para ter uma coluna "Em andamento" sem mexer em tudo o que já usava `concluida_em`, entrou
+mais um campo de data, `iniciada_em`:
+
+| Situação | `iniciada_em` | `concluida_em` |
+|---|---|---|
+| A fazer | vazio | vazio |
+| Em andamento | preenchido | vazio |
+| Concluída | qualquer | preenchido |
+
+"Pendente" continua querendo dizer `concluida_em` vazio (a fazer + em andamento), então os
+contadores, os filtros antigos e o comando de lembretes funcionam como antes. A propriedade
+`Tarefa.situacao` diz em qual das três a tarefa está, e `Tarefa.mudar_situacao(nova)` é o
+único lugar que mexe nos dois campos. Ela devolve a ação para o histórico (`iniciou`,
+`concluiu`, `reabriu`, `voltou`) ou `None` quando nada mudou. Quem chama faz o `save`.
+
+### Quadro (`QuadroView` e `tarefa_mover`)
+
+O quadro busca as tarefas pendentes e as concluídas nos últimos 30 dias **numa consulta só**
+e separa as colunas em Python. Cada coluna sabe qual é a anterior e a próxima, e isso vira
+o valor das setas ◀ ▶ de cada cartão.
+
+Arrastar um cartão chama `tarefa_mover` por `fetch`, com `Accept: application/json`; a view
+responde JSON e a página não recarrega. Sem JavaScript, as setas são botões de formulário
+comuns, a view responde com um redirecionamento para `next` e tudo continua funcionando.
+
+### Calendário (`CalendarioView`)
+
+`calendar.Calendar(firstweekday=6).monthdatescalendar()` devolve as semanas do mês,
+de domingo a sábado, já com os dias dos meses vizinhos que completam a primeira e a última
+semana. A view busca as tarefas com prazo entre o primeiro e o último dia da grade e agrupa
+por `timezone.localdate(prazo)`, ou seja, pelo dia **em Cuiabá**: uma tarefa às 23h30 não
+pula para o dia seguinte por causa do UTC. No celular, a grade dá lugar a uma lista com os
+dias que têm tarefa.
+
+### Histórico (`Atividade`)
+
+Cada linha guarda tarefa, usuário (o `User` logado, não o `Responsavel`), ação, um detalhe
+em texto e a data. Quem escreve é `registrar_atividade()`, chamada pelas views: criar,
+editar (com os campos que mudaram, tirados de `form.changed_data`), iniciar/concluir/reabrir,
+mover no quadro, adicionar e remover itens e marcar o checklist. Salvar sem mudar nada não
+gera linha. Se o usuário for excluído, a linha fica e aparece como "Alguém". No admin o
+histórico é só leitura.
+
+### Adição rápida (`TarefaRapidaForm` e `tarefa_rapida`)
+
+A janela abre com a tecla **N** ou o botão de raio. O formulário não vem junto com cada
+página (o que custaria uma consulta a mais em todas): o `app.js` busca `/tarefas/rapida/`
+quando a janela abre. Palavras especiais no texto preenchem os campos e saem do título:
+
+| No texto | Vira |
+|---|---|
+| `@ana` | responsável cujo nome (ou sobrenome) começa com "ana", sem ligar para acento; precisa ser um só |
+| `#urgente` | etiqueta com esse nome, que já precisa existir |
+| `!alta`, `!media`, `!baixa` | prioridade |
+| `hoje`, `amanhã`, `25/12`, `25/12/2027` | dia do prazo (sem ano, um dia que já passou é o do ano que vem) |
+| `14h`, `14h30`, `14:30` | hora do prazo (sem hora, 17h) |
+
+Sem `@nome`, vale o responsável escolhido na lista (o último usado fica lembrado no
+navegador). Sem dia nem hora, vale o campo de prazo e, se ele estiver vazio, amanhã às 17h.
+
+### Atalhos de teclado
+
+| Tecla | Faz |
+|---|---|
+| `N` | adição rápida |
+| `/` | vai para a busca |
+| `G` e depois `P`, `T`, `Q` ou `C` | Painel, Tarefas, Quadro ou Calendário |
+| `?` | mostra a lista de atalhos |
+
+Os atalhos são ignorados enquanto você digita num campo ou quando há uma janela aberta.

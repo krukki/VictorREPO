@@ -1,73 +1,84 @@
 {% comment %}
-Sprite de ícones SVG. Fica escondido no começo do <body> e cada ícone é usado com
-<svg><use href="#i-nome"></use></svg>. Os ícones de linha usam currentColor; os de
-mensagem são orbes com gradiente próprio.
+Ícones usados no site, desenhados uma vez só. Para usar um:
+<svg class="icone" aria-hidden="true"><use href="#i-painel"></use></svg>
 {% endcomment %}
-<svg xmlns="http://www.w3.org/2000/svg" class="sprite" aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden">
-    <defs>
-        <linearGradient id="g-reflexo" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#fff" stop-opacity="0.95"/>
-            <stop offset="1" stop-color="#fff" stop-opacity="0"/>
-        </linearGradient>
-        <radialGradient id="g-orbe-verde" cx="0.5" cy="0.32" r="0.72">
-            <stop offset="0" stop-color="#D2F9BC"/>
-            <stop offset="0.55" stop-color="#5CC23A"/>
-            <stop offset="1" stop-color="#2E8B36"/>
-        </radialGradient>
-        <radialGradient id="g-orbe-azul" cx="0.5" cy="0.32" r="0.72">
-            <stop offset="0" stop-color="#C6EEFF"/>
-            <stop offset="0.55" stop-color="#29A3E5"/>
-            <stop offset="1" stop-color="#0B65A3"/>
-        </radialGradient>
-        <radialGradient id="g-orbe-amarelo" cx="0.5" cy="0.32" r="0.72">
-            <stop offset="0" stop-color="#FFF4C2"/>
-            <stop offset="0.55" stop-color="#FFC233"/>
-            <stop offset="1" stop-color="#E08A00"/>
-        </radialGradient>
-        <radialGradient id="g-orbe-vermelho" cx="0.5" cy="0.32" r="0.72">
-            <stop offset="0" stop-color="#FFD0D0"/>
-            <stop offset="0.55" stop-color="#EF5350"/>
-            <stop offset="1" stop-color="#B71C1C"/>
-        </radialGradient>
-    </defs>
-
-    <!-- Ícones de linha -->
-    <symbol id="i-predio" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16M15 9h4a1 1 0 0 1 1 1v11M3 21h18M8 8h3M8 12h3M8 16h3"/>
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none">
+    <symbol id="i-marca" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M12 2 2 7l10 5 8-4v6h2V7L12 2Zm-6 9.2V16c0 1.7 2.7 3.5 6 3.5s6-1.8 6-3.5v-4.8l-6 3-6-3Z"/>
     </symbol>
-    <symbol id="i-folha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15"/>
-        <path d="M5 19c3-4 6-7 10-9"/>
+    <symbol id="i-painel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/>
+        <rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>
     </symbol>
-    <symbol id="i-etiqueta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z"/>
-        <circle cx="7.5" cy="7.5" r="1.5"/>
+    <symbol id="i-tarefas" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m9 11 3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/>
     </symbol>
-
-    <!-- Orbes das mensagens (success, info, warning, error, debug) -->
-    <symbol id="i-msg-success" viewBox="0 0 32 32">
-        <circle cx="16" cy="16" r="14" fill="url(#g-orbe-verde)"/>
-        <ellipse cx="16" cy="9.5" rx="9" ry="5" fill="url(#g-reflexo)"/>
-        <path d="M10 16.5l4 4 8-9" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <symbol id="i-quadro" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18"/>
     </symbol>
-    <symbol id="i-msg-info" viewBox="0 0 32 32">
-        <circle cx="16" cy="16" r="14" fill="url(#g-orbe-azul)"/>
-        <ellipse cx="16" cy="9.5" rx="9" ry="5" fill="url(#g-reflexo)"/>
-        <path d="M16 15v7" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
-        <circle cx="16" cy="10.5" r="1.8" fill="#fff"/>
+    <symbol id="i-calendario" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/>
     </symbol>
-    <symbol id="i-msg-debug" viewBox="0 0 32 32">
-        <use href="#i-msg-info"/>
+    <symbol id="i-projetos" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/>
     </symbol>
-    <symbol id="i-msg-warning" viewBox="0 0 32 32">
-        <circle cx="16" cy="16" r="14" fill="url(#g-orbe-amarelo)"/>
-        <ellipse cx="16" cy="9.5" rx="9" ry="5" fill="url(#g-reflexo)"/>
-        <path d="M16 9.5v8" fill="none" stroke="#6B4500" stroke-width="3" stroke-linecap="round"/>
-        <circle cx="16" cy="22" r="1.8" fill="#6B4500"/>
+    <symbol id="i-pessoas" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/>
+        <path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c1.8.7 3 2.5 3.5 5.2"/>
     </symbol>
-    <symbol id="i-msg-error" viewBox="0 0 32 32">
-        <circle cx="16" cy="16" r="14" fill="url(#g-orbe-vermelho)"/>
-        <ellipse cx="16" cy="9.5" rx="9" ry="5" fill="url(#g-reflexo)"/>
-        <path d="M11.5 11.5l9 9M20.5 11.5l-9 9" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+    <symbol id="i-cadastros" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/>
+    </symbol>
+    <symbol id="i-mais" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+        <path d="M12 5v14M5 12h14"/>
+    </symbol>
+    <symbol id="i-raio" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/>
+    </symbol>
+    <symbol id="i-lua" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/>
+    </symbol>
+    <symbol id="i-sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="12" cy="12" r="4"/>
+        <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+    </symbol>
+    <symbol id="i-usuario" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4.2-6 8-6s7 2 8 6"/>
+    </symbol>
+    <symbol id="i-seta-baixo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m6 9 6 6 6-6"/>
+    </symbol>
+    <symbol id="i-seta-esq" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m15 18-6-6 6-6"/>
+    </symbol>
+    <symbol id="i-seta-dir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m9 18 6-6-6-6"/>
+    </symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+        <path d="M4 6h16M4 12h16M4 18h16"/>
+    </symbol>
+    <symbol id="i-bandeira" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M5 3a1 1 0 0 1 1 1v.3c1.6-.8 3.3-.9 5.2-.1 1.7.7 3.4.7 5.3-.2A1 1 0 0 1 18 5v9a1 1 0 0 1-.6.9c-2.4 1.1-4.7 1.2-6.9.3-1.6-.6-3-.5-4.5.3V21a1 1 0 1 1-2 0V4a1 1 0 0 1 1-1Z"/>
+    </symbol>
+    <symbol id="i-relogio" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
+    </symbol>
+    <symbol id="i-historico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>
+    </symbol>
+    <symbol id="i-play" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M8 5.1v13.8a1 1 0 0 0 1.5.9l11-6.9a1 1 0 0 0 0-1.7l-11-6.9A1 1 0 0 0 8 5.1Z"/>
+    </symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m5 12 5 5L20 7"/>
+    </symbol>
+    <symbol id="i-teclado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/>
+    </symbol>
+    <symbol id="i-sair" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+    </symbol>
+    <symbol id="i-fechar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+        <path d="M6 6l12 12M18 6 6 18"/>
     </symbol>
 </svg>

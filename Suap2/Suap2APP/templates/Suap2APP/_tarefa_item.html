@@ -1,7 +1,16 @@
-<div class="item item-tarefa{% if tarefa.concluida_em %} item-concluida{% elif tarefa.prazo < now %} item-atrasada{% endif %}">
+{% with situacao=tarefa.situacao %}
+<div class="item item-tarefa prioridade-{{ tarefa.prioridade }} situacao-{{ situacao }}">
     <div class="item-info">
-        <div class="item-titulo{% if tarefa.concluida_em %} concluida{% endif %}">
-            <a href="{% url 'tarefa_detail' tarefa.pk %}">{{ tarefa.titulo }}</a>
+        <div class="linha-titulo">
+            <span class="item-titulo{% if tarefa.concluida_em %} concluida{% endif %}">
+                <a href="{% url 'tarefa_detail' tarefa.pk %}">{{ tarefa.titulo }}</a>
+            </span>
+            {% if not tarefa.concluida_em %}
+                {% include 'Suap2APP/_prioridade.html' %}
+            {% endif %}
+            {% if situacao == 'em_andamento' %}
+                <span class="selo selo-andamento"><svg class="icone" aria-hidden="true"><use href="#i-play"></use></svg>Em andamento</span>
+            {% endif %}
         </div>
         <div class="item-detalhe">
             {% if tarefa.concluida_em %}
@@ -34,10 +43,18 @@
         {% endif %}
     </div>
     <div class="acoes">
+        {% if situacao == 'a_fazer' %}
+            <form method="post" action="{% url 'tarefa_mover' tarefa.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="situacao" value="em_andamento">
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="btn btn-secondary btn-small" title="Marcar como em andamento">Iniciar</button>
+            </form>
+        {% endif %}
         <form method="post" action="{% url 'tarefa_toggle' tarefa.pk %}">
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ request.get_full_path }}">
-            <button type="submit" class="btn {% if tarefa.concluida_em %}btn-secondary{% else %}btn-success{% endif %} btn-small">
+            <button type="submit" class="btn btn-secondary btn-small">
                 {% if tarefa.concluida_em %}Reabrir{% else %}Concluir{% endif %}
             </button>
         </form>
@@ -45,3 +62,4 @@
         <a class="btn btn-danger btn-small" href="{% url 'tarefa_delete' tarefa.pk %}">Excluir</a>
     </div>
 </div>
+{% endwith %}

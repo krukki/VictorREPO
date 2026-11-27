@@ -1,12 +1,16 @@
-from datetime import timedelta
+import calendar
+import re
+from collections import defaultdict
+from datetime import date, datetime, time, timedelta
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.db.models import Count, ProtectedError, Q, Sum
-from django.http import Http404
-from django.shortcuts import redirect, get_object_or_404
+from django.db.models import Count, Prefetch, ProtectedError, Q, Sum
+from django.http import Http404, HttpResponseBadRequest, JsonResponse
+from django.shortcuts import redirect, get_object_or_404, render
+from django.template.defaultfilters import floatformat
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -15,6 +19,7 @@ from django.views.generic import TemplateView, ListView, DetailView, CreateView,
 
 from .models import (
     Anexo,
+    Atividade,
     Categoria,
     Comentario,
     Departamento,
@@ -24,6 +29,7 @@ from .models import (
     Responsavel,
     Subtarefa,
     Tarefa,
+    registrar_atividade,
 )
 from .forms import (
     AnexoForm,
@@ -37,6 +43,7 @@ from .forms import (
     SubtarefaForm,
     TarefaFiltroForm,
     TarefaForm,
+    TarefaRapidaForm,
 )
 
 
@@ -87,6 +94,7 @@ class PainelView(LoginRequiredMixin, TemplateView):
         pendente = Q(concluida_em__isnull=True)
         context.update(Tarefa.objects.aggregate(
             pendentes=Count('pk', filter=pendente),
+            em_andamento=Count('pk', filter=pendente & Q(iniciada_em__isnull=False)),
             atrasadas=Count('pk', filter=pendente & Q(prazo__lt=agora)),
             concluidas=Count('pk', filter=Q(concluida_em__isnull=False)),
             vencem_na_semana=Count('pk', filter=pendente & Q(prazo__gte=agora, prazo__lt=agora + semana)),
@@ -117,6 +125,7 @@ def contar_por_situacao(tarefas, agora):
     pendente = Q(concluida_em__isnull=True)
     return tarefas.aggregate(
         pendentes=Count('pk', filter=pendente),
+        em_andamento=Count('pk', filter=pendente & Q(iniciada_em__isnull=False)),
         atrasadas=Count('pk', filter=pendente & Q(prazo__lt=agora)),
         concluidas=Count('pk', filter=Q(concluida_em__isnull=False)),
     )
@@ -132,7 +141,8 @@ class TarefaListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         self.agora = timezone.now()
         self.filtro = TarefaFiltroForm(self.request.GET)
-        return self.filtro.filtrar(Tarefa.objects.com_relacionados(), self.agora)
+        tarefas = self.filtro.filtrar(Tarefa.objects.com_relacionados(), self.agora)
+        return self.filtro.aplicar_ordem(tarefas)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -164,6 +174,7 @@ class TarefaDetailView(LoginRequiredMixin, DetailView):
     def get_queryset(self):
         return Tarefa.objects.com_relacionados().prefetch_related(
             'comentarios__autor', 'anexos', 'registros_tempo__responsavel',
+            Prefetch('atividades', queryset=Atividade.objects.select_related('usuario')),
         )
 
     def get_context_data(self, **kwargs):
@@ -185,8 +196,20 @@ class TarefaDetailView(LoginRequiredMixin, DetailView):
         item = form.save(commit=False)
         item.tarefa = self.object
         item.save()
+        registrar_atividade(self.object, request.user, 'adicionou', descrever_item(acao, item))
         messages.success(request, sucesso)
         return redirect(self.object)
+
+
+def descrever_item(tipo, item):
+    """Como um item de dentro da tarefa aparece no histórico."""
+    if tipo == 'subtarefa':
+        return f'a subtarefa “{item.descricao}”'
+    if tipo == 'comentario':
+        return f'um comentário de {item.autor}' if item.autor else 'um comentário'
+    if tipo == 'anexo':
+        return f'o anexo “{item.nome_arquivo}”'
+    return f'{floatformat(item.horas, -2)} h de trabalho de {item.responsavel.nome}'
 
 
 class TarefaFormularioMixin(FormularioMixin):
@@ -204,10 +227,22 @@ class TarefaCreateView(TarefaFormularioMixin, CreateView):
     titulo_pagina = 'Nova tarefa'
     success_message = 'Tarefa "%(titulo)s" criada.'
 
+    def form_valid(self, form):
+        resposta = super().form_valid(form)
+        registrar_atividade(self.object, self.request.user, 'criou')
+        return resposta
+
 
 class TarefaUpdateView(TarefaFormularioMixin, UpdateView):
     titulo_pagina = 'Editar tarefa'
     success_message = 'Tarefa "%(titulo)s" atualizada.'
+
+    def form_valid(self, form):
+        resposta = super().form_valid(form)
+        if form.changed_data:
+            campos = ', '.join(form.fields[nome].label.lower() for nome in form.changed_data)
+            registrar_atividade(self.object, self.request.user, 'editou', campos)
+        return resposta
 
 
 class TarefaDeleteView(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
@@ -233,15 +268,51 @@ class TarefaDeleteView(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
 @require_POST
 def tarefa_toggle(request, pk):
     tarefa = get_object_or_404(Tarefa, pk=pk)
-    tarefa.concluida_em = None if tarefa.concluida_em else timezone.now()
-    tarefa.save(update_fields=['concluida_em'])
+    if tarefa.concluida_em:
+        # Reabrir devolve a tarefa para onde ela estava antes de ser concluída
+        nova = 'em_andamento' if tarefa.iniciada_em else 'a_fazer'
+    else:
+        nova = 'concluida'
+    acao = tarefa.mudar_situacao(nova)
+    tarefa.save(update_fields=['iniciada_em', 'concluida_em'])
+    registrar_atividade(tarefa, request.user, acao)
     estado = 'concluída' if tarefa.concluida_em else 'reaberta'
     messages.success(request, f'Tarefa "{tarefa.titulo}" {estado}.')
-    # Volta para a página de onde veio (com filtros), se for um endereço deste site
+    return voltar(request, 'tarefa_list')
+
+
+def voltar(request, padrao):
+    """Volta para a página de onde veio (com filtros), se `next` for um endereço deste site."""
     proxima = request.POST.get('next')
-    if proxima and url_has_allowed_host_and_scheme(proxima, allowed_hosts={request.get_host()}):
+    if proxima and url_has_allowed_host_and_scheme(
+        proxima, allowed_hosts={request.get_host()}, require_https=request.is_secure(),
+    ):
         return redirect(proxima)
-    return redirect('tarefa_list')
+    return redirect(padrao)
+
+
+def quer_json(request):
+    """Pedidos feitos pelo app.js (quadro, adição rápida) pedem a resposta em JSON."""
+    return 'application/json' in request.headers.get('Accept', '')
+
+
+@login_required
+@require_POST
+def tarefa_mover(request, pk):
+    """Muda a situação da tarefa: é o que o quadro chama ao arrastar um cartão."""
+    tarefa = get_object_or_404(Tarefa, pk=pk)
+    nova = request.POST.get('situacao')
+    if nova not in dict(Tarefa.SITUACOES):
+        return HttpResponseBadRequest('Situação desconhecida.')
+    acao = tarefa.mudar_situacao(nova)
+    if acao:
+        tarefa.save(update_fields=['iniciada_em', 'concluida_em'])
+        registrar_atividade(tarefa, request.user, acao)
+    rotulo = tarefa.get_situacao_display()
+    if quer_json(request):
+        return JsonResponse({'ok': True, 'situacao': nova, 'rotulo': rotulo})
+    messages.success(request, f'Tarefa "{tarefa.titulo}" agora está em "{rotulo}".')
+    return voltar(request, 'quadro')
 
 
 # Itens de dentro da tarefa
@@ -262,19 +333,23 @@ def item_delete(request, tipo, pk):
     if tipo not in TIPOS_DE_ITEM:
         raise Http404('Tipo de item desconhecido.')
     modelo, mensagem = TIPOS_DE_ITEM[tipo]
-    item = get_object_or_404(modelo, pk=pk)
-    tarefa_pk = item.tarefa_id
+    item = get_object_or_404(modelo.objects.select_related('tarefa'), pk=pk)
+    tarefa = item.tarefa
+    descricao = descrever_item(tipo, item)
     item.delete()
+    registrar_atividade(tarefa, request.user, 'removeu', descricao)
     messages.success(request, mensagem)
-    return redirect('tarefa_detail', pk=tarefa_pk)
+    return redirect(tarefa)
 
 
 @login_required
 @require_POST
 def subtarefa_toggle(request, pk):
-    subtarefa = get_object_or_404(Subtarefa, pk=pk)
+    subtarefa = get_object_or_404(Subtarefa.objects.select_related('tarefa'), pk=pk)
     subtarefa.concluida = not subtarefa.concluida
     subtarefa.save(update_fields=['concluida'])
+    acao = 'marcou' if subtarefa.concluida else 'desmarcou'
+    registrar_atividade(subtarefa.tarefa, request.user, acao, f'“{subtarefa.descricao}” no checklist')
     return redirect('tarefa_detail', pk=subtarefa.tarefa_id)
 
 
@@ -522,3 +597,135 @@ class EtiquetaDeleteView(ExclusaoMixin, DeleteView):
 
     def contar_relacionados(self):
         return self.object.tarefas.count()
+
+
+# Quadro (kanban)
+
+class QuadroView(LoginRequiredMixin, TemplateView):
+    """As tarefas em três colunas, uma por situação. Arrastar um cartão chama tarefa_mover."""
+    template_name = 'Suap2APP/quadro.html'
+    DIAS_DE_CONCLUIDAS = 30
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        agora = timezone.now()
+        filtro = TarefaFiltroForm(self.request.GET)
+        limite = agora - timedelta(days=self.DIAS_DE_CONCLUIDAS)
+        # Uma consulta só para as três colunas; a separação acontece aqui em Python
+        tarefas = filtro.filtrar(
+            Tarefa.objects.com_relacionados().com_peso_da_prioridade(), agora, com_status=False,
+        ).filter(Q(concluida_em__isnull=True) | Q(concluida_em__gte=limite)).order_by('peso_prioridade', 'prazo')
+        por_situacao = defaultdict(list)
+        for tarefa in tarefas:
+            por_situacao[tarefa.situacao].append(tarefa)
+        por_situacao['concluida'].sort(key=lambda t: t.concluida_em, reverse=True)
+
+        ordem = [valor for valor, _ in Tarefa.SITUACOES]
+        context['colunas'] = [
+            {
+                'situacao': valor,
+                'titulo': rotulo,
+                'tarefas': por_situacao[valor],
+                'anterior': ordem[i - 1] if i > 0 else '',
+                'proxima': ordem[i + 1] if i + 1 < len(ordem) else '',
+            }
+            for i, (valor, rotulo) in enumerate(Tarefa.SITUACOES)
+        ]
+        context['filtro'] = filtro
+        context['filtrando'] = any(self.request.GET.get(campo) for campo in filtro.fields)
+        context['dias_de_concluidas'] = self.DIAS_DE_CONCLUIDAS
+        context['now'] = agora
+        return context
+
+
+# Calendário
+
+MES = re.compile(r'(\d{4})-(\d{1,2})')
+DIAS_DA_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+
+
+class CalendarioView(LoginRequiredMixin, TemplateView):
+    """Um mês por vez, com cada tarefa no dia do prazo. O mês vem de ?mes=AAAA-MM."""
+    template_name = 'Suap2APP/calendario.html'
+
+    def mes_pedido(self):
+        hoje = timezone.localdate()
+        m = MES.fullmatch(self.request.GET.get('mes', ''))
+        if m:
+            try:
+                return date(int(m[1]), int(m[2]), 1)
+            except ValueError:
+                pass
+        return hoje.replace(day=1)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        agora = timezone.now()
+        hoje = timezone.localdate()
+        primeiro = self.mes_pedido()
+        # Semanas completas, de domingo a sábado, incluindo os dias dos meses vizinhos
+        semanas = calendar.Calendar(firstweekday=6).monthdatescalendar(primeiro.year, primeiro.month)
+        inicio = timezone.make_aware(datetime.combine(semanas[0][0], time.min))
+        fim = timezone.make_aware(datetime.combine(semanas[-1][-1] + timedelta(days=1), time.min))
+
+        filtro = TarefaFiltroForm(self.request.GET)
+        tarefas = filtro.filtrar(
+            Tarefa.objects.select_related('categoria', 'pessoa_responsavel'), agora, com_status=False,
+        ).filter(prazo__gte=inicio, prazo__lt=fim).order_by('prazo')
+        por_dia = defaultdict(list)
+        for tarefa in tarefas:
+            por_dia[timezone.localdate(tarefa.prazo)].append(tarefa)
+
+        context['semanas'] = [
+            [
+                {'data': dia, 'tarefas': por_dia[dia], 'fora': dia.month != primeiro.month, 'hoje': dia == hoje}
+                for dia in semana
+            ]
+            for semana in semanas
+        ]
+        context['agenda'] = [
+            dia for semana in context['semanas'] for dia in semana if dia['tarefas'] and not dia['fora']
+        ]
+        anterior = (primeiro - timedelta(days=1)).replace(day=1)
+        proximo = (primeiro + timedelta(days=32)).replace(day=1)
+        context.update(
+            mes=primeiro,
+            mes_anterior=f'{anterior:%Y-%m}',
+            mes_proximo=f'{proximo:%Y-%m}',
+            e_mes_atual=primeiro == hoje.replace(day=1),
+            dias_da_semana=DIAS_DA_SEMANA,
+            filtro=filtro,
+            filtrando=any(self.request.GET.get(campo) for campo in filtro.fields),
+            now=agora,
+        )
+        return context
+
+
+# Adição rápida
+
+@login_required
+def tarefa_rapida(request):
+    """GET devolve o formulário da janela de adição rápida; POST cria a tarefa."""
+    if request.method != 'POST':
+        return render(request, 'Suap2APP/_tarefa_rapida.html', {'form': TarefaRapidaForm()})
+
+    form = TarefaRapidaForm(request.POST)
+    if not form.is_valid():
+        erros = [erro for lista in form.errors.values() for erro in lista]
+        if quer_json(request):
+            return JsonResponse({'ok': False, 'erros': erros}, status=400)
+        messages.error(request, ' '.join(erros))
+        return voltar(request, 'tarefa_list')
+
+    tarefa = form.save()
+    registrar_atividade(tarefa, request.user, 'criou', 'pela adição rápida')
+    prazo = timezone.localtime(tarefa.prazo)
+    mensagem = (
+        f'Tarefa "{tarefa.titulo}" criada para {tarefa.pessoa_responsavel.nome}, '
+        f'prazo {prazo:%d/%m às %H:%M}.'
+    )
+    # A mensagem aparece na próxima página, inclusive quando o app.js recarrega a atual
+    messages.success(request, mensagem)
+    if quer_json(request):
+        return JsonResponse({'ok': True, 'url': tarefa.get_absolute_url(), 'mensagem': mensagem})
+    return voltar(request, 'tarefa_list')

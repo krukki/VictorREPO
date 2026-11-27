@@ -6,7 +6,8 @@ trabalhadas. São dez modelos: `Departamento`, `Responsavel`, `Projeto`, `Catego
 `Etiqueta`, `Tarefa`, `Subtarefa`, `Comentario`, `Anexo` e `RegistroTempo`.
 
 Este arquivo explica **como rodar**. Para entender **como o código funciona por dentro**,
-veja o [GUIA.md](GUIA.md).
+veja o [GUIA.md](GUIA.md). Para **publicar na internet** de graça, veja o
+[PYTHONANYWHERE.md](PYTHONANYWHERE.md).
 
 ## Como rodar
 

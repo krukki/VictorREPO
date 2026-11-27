@@ -7,7 +7,7 @@
     <div class="cabecalho">
         <div>
             <h1 class="{% if tarefa.concluida_em %}concluida{% endif %}">{{ tarefa.titulo }}</h1>
-            <div class="item-detalhe subtitulo">
+            <div class="item-detalhe">
                 {% if tarefa.concluida_em %}
                     Concluída em {{ tarefa.concluida_em|date:"d/m/Y H:i" }}
                 {% elif tarefa.atrasada %}
@@ -24,26 +24,26 @@
                     {% csrf_token %}
                     <input type="hidden" name="situacao" value="em_andamento">
                     <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                    <button type="submit" class="btn btn-secondary">
-                        <svg class="icone" aria-hidden="true"><use href="#i-play"></use></svg>Iniciar
+                    <button type="submit" class="btn btn-small">
+                        <svg aria-hidden="true"><use href="#i-play"></use></svg>Iniciar
                     </button>
                 </form>
             {% endif %}
             <form method="post" action="{% url 'tarefa_toggle' tarefa.pk %}">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                <button type="submit" class="btn btn-primary">
-                    {% if tarefa.concluida_em %}Reabrir{% else %}<svg class="icone" aria-hidden="true"><use href="#i-check"></use></svg>Concluir{% endif %}
+                <button type="submit" class="btn {% if tarefa.concluida_em %}btn-secondary{% else %}btn-success{% endif %} btn-small">
+                    {% if tarefa.concluida_em %}Reabrir{% else %}Concluir{% endif %}
                 </button>
             </form>
-            <a class="btn btn-secondary" href="{% url 'tarefa_update' tarefa.pk %}">Editar</a>
-            <a class="btn btn-danger" href="{% url 'tarefa_delete' tarefa.pk %}">Excluir</a>
+            <a class="btn btn-secondary btn-small" href="{% url 'tarefa_update' tarefa.pk %}">Editar</a>
+            <a class="btn btn-danger btn-small" href="{% url 'tarefa_delete' tarefa.pk %}">Excluir</a>
         </div>
     </div>
 
     <div class="layout-detalhe">
         <div>
-            <section class="caixa secao">
+            <section>
                 <h2>Checklist</h2>
 
                 {% if tarefa.subtarefas.all %}
@@ -75,7 +75,7 @@
                 {% include 'Suap2APP/_form_item.html' with form=form_subtarefa acao='subtarefa' rotulo='Adicionar subtarefa' %}
             </section>
 
-            <section class="caixa secao">
+            <section>
                 <h2>Comentários</h2>
 
                 {% if tarefa.comentarios.all %}
@@ -101,7 +101,7 @@
                 {% include 'Suap2APP/_form_item.html' with form=form_comentario acao='comentario' rotulo='Comentar' %}
             </section>
 
-            <section class="caixa secao">
+            <section>
                 <h2>Anexos</h2>
 
                 {% if tarefa.anexos.all %}
@@ -128,7 +128,7 @@
                 {% include 'Suap2APP/_form_item.html' with form=form_anexo acao='anexo' rotulo='Enviar anexo' arquivo=True %}
             </section>
 
-            <section class="caixa secao">
+            <section>
                 <h2>Tempo trabalhado</h2>
 
                 {% if tarefa.registros_tempo.all %}
@@ -158,17 +158,17 @@
         </div>
 
         <aside class="lateral">
-            <section class="caixa">
+            <section>
                 <h2>Detalhes</h2>
                 <dl class="ficha">
                     <dt>Situação</dt>
                     <dd>
                         {% if situacao == 'concluida' %}
-                            <span class="selo selo-concluida"><svg class="icone" aria-hidden="true"><use href="#i-check"></use></svg>Concluída</span>
+                            <span class="badge cor-verde">Concluída</span>
                         {% elif situacao == 'em_andamento' %}
-                            <span class="selo selo-andamento"><svg class="icone" aria-hidden="true"><use href="#i-play"></use></svg>Em andamento</span>
+                            <span class="badge cor-azul">Em andamento</span>
                         {% else %}
-                            <span class="selo selo-a-fazer">A fazer</span>
+                            <span class="badge cor-cinza">A fazer</span>
                         {% endif %}
                     </dd>
 
@@ -209,14 +209,14 @@
                 </dl>
             </section>
 
-            <section class="caixa">
-                <h2 class="titulo-secao"><svg class="icone" aria-hidden="true"><use href="#i-historico"></use></svg>Histórico</h2>
+            <section>
+                <h2>Histórico</h2>
                 {% if tarefa.atividades.all %}
                     <ol class="historico">
                         {% for atividade in tarefa.atividades.all %}
                             <li class="historico-{{ atividade.acao }}">
-                                <span class="historico-icone">
-                                    <svg class="icone" aria-hidden="true"><use href="#{% if atividade.acao == 'concluiu' %}i-check{% elif atividade.acao == 'iniciou' %}i-play{% elif atividade.acao == 'criou' %}i-mais{% else %}i-historico{% endif %}"></use></svg>
+                                <span class="orbe historico-orbe" aria-hidden="true">
+                                    <svg><use href="#{% if atividade.acao == 'concluiu' %}i-check{% elif atividade.acao == 'iniciou' %}i-play{% elif atividade.acao == 'criou' %}i-mais{% else %}i-historico{% endif %}"></use></svg>
                                 </span>
                                 <div>
                                     <div class="historico-texto">{{ atividade.texto }}</div>

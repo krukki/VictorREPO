@@ -5,25 +5,25 @@
 {% block content %}
     <div class="cabecalho">
         <div class="calendario-navegacao">
-            <a class="botao-icone btn-secondary" href="{% querystring mes=mes_anterior %}" title="Mês anterior">
-                <svg class="icone" aria-hidden="true"><use href="#i-seta-esq"></use></svg><span class="sr-only">Mês anterior</span>
+            <a class="btn btn-small btn-icone" href="{% querystring mes=mes_anterior %}" title="Mês anterior">
+                <svg aria-hidden="true"><use href="#i-seta-esq"></use></svg><span class="visualmente-oculto">Mês anterior</span>
             </a>
             <h1>{{ mes|date:"F \d\e Y"|capfirst }}</h1>
-            <a class="botao-icone btn-secondary" href="{% querystring mes=mes_proximo %}" title="Próximo mês">
-                <svg class="icone" aria-hidden="true"><use href="#i-seta-dir"></use></svg><span class="sr-only">Próximo mês</span>
+            <a class="btn btn-small btn-icone" href="{% querystring mes=mes_proximo %}" title="Próximo mês">
+                <svg aria-hidden="true"><use href="#i-seta-dir"></use></svg><span class="visualmente-oculto">Próximo mês</span>
             </a>
             {% if not e_mes_atual %}
                 <a class="btn btn-secondary btn-small" href="{% querystring mes=None %}">Hoje</a>
             {% endif %}
         </div>
         <a class="btn btn-primary" href="{% url 'tarefa_create' %}">
-            <svg class="icone" aria-hidden="true"><use href="#i-mais"></use></svg>Nova tarefa
+            + Nova tarefa
         </a>
     </div>
 
     <details class="filtros-recolhivel" data-filtros{% if filtrando %} data-filtrando{% endif %} open>
-        <summary class="btn btn-secondary">Filtros{% if filtrando %} (ativos){% endif %}</summary>
-        <form method="get" class="filtros filtros-linha" role="search">
+        <summary class="btn">Filtros{% if filtrando %} (ativos){% endif %}</summary>
+        <form method="get" class="filtros" role="search">
             <input type="hidden" name="mes" value="{{ mes|date:'Y-m' }}">
             <div class="filtro-busca">
                 <label for="{{ filtro.q.id_for_label }}">{{ filtro.q.label }}</label>

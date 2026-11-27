@@ -7,7 +7,8 @@ trabalhadas. São onze modelos: `Departamento`, `Responsavel`, `Projeto`, `Categ
 
 Além da lista, as tarefas aparecem num **quadro** (arraste entre A fazer, Em andamento e
 Concluída) e num **calendário** mensal. Cada tarefa tem prioridade e um histórico do que
-aconteceu com ela. O visual tem tema claro e escuro, e a tecla **N** abre a adição rápida:
+aconteceu com ela. O visual imita os sites da era do Windows Vista (o tema "Aero"), e a
+tecla **N** abre a adição rápida:
 escreva `Revisar o relatório amanhã 14h @ana #mensal !alta` e a tarefa sai pronta.
 Atalhos: `N` nova tarefa, `/` busca, `G` + `P`/`T`/`Q`/`C` para Painel, Tarefas, Quadro e
 Calendário, `?` lista os atalhos. Detalhes na seção 9 do [GUIA.md](GUIA.md).

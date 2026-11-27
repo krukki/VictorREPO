@@ -1,9 +1,9 @@
-// Suap2 — comportamentos da página. Tudo aqui é um extra: sem JavaScript o site
+// Suap2 — quadro, adição rápida e atalhos. Tudo aqui é um extra: sem JavaScript o site
 // continua funcionando (o quadro usa as setas, e "Nova tarefa" abre o formulário completo).
+// O aero.js, ao lado, cuida só do botão de fechar das mensagens.
 (function () {
     'use strict';
 
-    var CHAVE_TEMA = 'suap2-tema';
     var CHAVE_RESPONSAVEL = 'suap2-ultimo-responsavel';
 
     // localStorage pode não existir (janela anônima, bloqueio de cookies): nunca deixa quebrar
@@ -28,32 +28,11 @@
         });
     }
 
-    // Tema claro/escuro -------------------------------------------------------
-
-    function temaAtual() {
-        var escolhido = document.documentElement.dataset.theme;
-        if (escolhido) return escolhido;
-        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-
-    document.querySelectorAll('[data-alternar-tema]').forEach(function (botao) {
-        botao.addEventListener('click', function () {
-            var novo = temaAtual() === 'dark' ? 'light' : 'dark';
-            document.documentElement.dataset.theme = novo;
-            gravar(CHAVE_TEMA, novo === 'dark' ? 'escuro' : 'claro');
-        });
-    });
-
-    // Menus suspensos: fecham ao clicar fora ou apertar Esc --------------------
-
-    document.addEventListener('click', function (evento) {
-        document.querySelectorAll('details.suspenso[open]').forEach(function (menu) {
-            if (!menu.contains(evento.target)) menu.removeAttribute('open');
-        });
-    });
+    // Botões que só funcionam com JavaScript (adição rápida, atalhos) começam escondidos
+    document.querySelectorAll('[data-so-com-js]').forEach(function (el) { el.hidden = false; });
 
     // Filtros começam fechados em telas pequenas, a não ser que algum esteja em uso
-    if (window.matchMedia('(max-width: 1080px)').matches) {
+    if (window.matchMedia('(max-width: 767px)').matches) {
         document.querySelectorAll('[data-filtros]:not([data-filtrando])').forEach(function (caixa) {
             caixa.removeAttribute('open');
         });
@@ -73,7 +52,7 @@
 
     // Adição rápida -----------------------------------------------------------
 
-    var janelaRapida = document.getElementById('janela-rapida');
+    var janelaRapida = document.getElementById('dialogo-rapida');
     var botaoRapida = document.querySelector('[data-abrir-rapida]');
 
     function abrirRapida() {
@@ -136,12 +115,9 @@
 
     // Atalhos do teclado ------------------------------------------------------
 
-    var janelaAtalhos = document.getElementById('janela-atalhos');
+    var janelaAtalhos = document.getElementById('dialogo-atalhos');
     document.querySelectorAll('[data-abrir-atalhos]').forEach(function (botao) {
-        botao.addEventListener('click', function () {
-            botao.closest('details').removeAttribute('open');
-            janelaAtalhos.showModal();
-        });
+        botao.addEventListener('click', function () { janelaAtalhos.showModal(); });
     });
 
     var urls = document.querySelector('[data-urls]');
@@ -154,9 +130,6 @@
     }
 
     document.addEventListener('keydown', function (evento) {
-        if (evento.key === 'Escape') {
-            document.querySelectorAll('details.suspenso[open]').forEach(function (m) { m.removeAttribute('open'); });
-        }
         if (!urls || evento.ctrlKey || evento.metaKey || evento.altKey) return;
         if (digitando(evento.target) || document.querySelector('dialog[open]')) return;
 

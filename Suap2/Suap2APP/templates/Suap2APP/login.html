@@ -2,34 +2,34 @@
 
 {% block title %}Entrar — Suap2{% endblock %}
 
+{% block body_class %}pagina-centro{% endblock %}
+
 {% block content %}
-    <div class="caixa login">
-        <div class="login-cabecalho">
-            <h1>Entrar</h1>
-            <p class="item-detalhe">Gerenciador de tarefas Suap2</p>
+    <div class="destaque">
+        <h1>Entrar</h1>
+        <p>Suap2 · tarefas, projetos e responsáveis</p>
+    </div>
+
+    <form method="post" class="formulario">
+        {% csrf_token %}
+
+        {% if form.errors %}
+            <p class="erro erro-geral" role="alert">Usuário ou senha incorretos.</p>
+        {% endif %}
+
+        <div class="campo">
+            <label for="{{ form.username.id_for_label }}">Usuário</label>
+            {{ form.username }}
+        </div>
+        <div class="campo">
+            <label for="{{ form.password.id_for_label }}">Senha</label>
+            {{ form.password }}
         </div>
 
-        <form method="post" class="formulario">
-            {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
 
-            {% if form.errors %}
-                <div class="erro">Usuário ou senha incorretos.</div>
-            {% endif %}
-
-            <div>
-                <label for="{{ form.username.id_for_label }}">Usuário</label>
-                {{ form.username }}
-            </div>
-            <div>
-                <label for="{{ form.password.id_for_label }}">Senha</label>
-                {{ form.password }}
-            </div>
-
-            <input type="hidden" name="next" value="{{ next }}">
-
-            <div class="botoes">
-                <button type="submit" class="btn btn-primary">Entrar</button>
-            </div>
-        </form>
-    </div>
+        <div class="botoes">
+            <button type="submit" class="btn btn-primary">Entrar</button>
+        </div>
+    </form>
 {% endblock %}

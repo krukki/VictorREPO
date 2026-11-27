@@ -1,0 +1,644 @@
+/* Layout de telas específicas: cabeçalhos, filtros, formulários, tarefa, login e erros. */
+
+/* ---------- Cabeçalho de página (título + ação principal) ---------- */
+
+.cabecalho {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.cabecalho h1 {
+    margin: 0;
+}
+
+.cabecalho .item-detalhe {
+    margin-top: 6px;
+    font-size: 14px;
+}
+
+@media (min-width: 768px) {
+    .cabecalho {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+}
+
+/* ---------- Barra de filtros da lista de tarefas ---------- */
+
+.filtros {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    align-items: end;
+    margin-bottom: 22px;
+    padding: 14px;
+    border: 1px solid var(--caixa-borda);
+    border-radius: var(--raio-m);
+    background: linear-gradient(180deg, #E9F0F5 0%, #F7FAFC 100%);
+}
+
+.filtros label {
+    margin-bottom: 4px;
+    font-size: 13px;
+}
+
+.filtro-busca,
+.filtro-botoes {
+    grid-column: 1 / -1;
+}
+
+.filtro-botoes {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+@media (min-width: 768px) {
+    .filtros {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 1280px) {
+    .filtros {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
+
+/* ---------- Formulário de criar/editar ---------- */
+
+.formulario {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    max-width: 640px;
+}
+
+.botoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+/* ---------- Tela da tarefa ---------- */
+
+h1.concluida {
+    text-decoration: line-through;
+    text-decoration-color: rgba(30, 107, 46, 0.6);
+}
+
+.lista-itens {
+    margin-bottom: 12px;
+}
+
+.texto-comentario {
+    margin-top: 4px;
+    font-size: 14px;
+    overflow-wrap: anywhere;
+}
+
+/* Formulários de adicionar item (subtarefa, comentário, anexo, tempo) */
+.form-item {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    align-items: end;
+    margin-bottom: 8px;
+    padding: 14px;
+    border: 1px solid var(--caixa-borda);
+    border-radius: var(--raio-m);
+    background: linear-gradient(180deg, #F1F5F8 0%, #FAFCFD 100%);
+}
+
+.form-item label {
+    margin-bottom: 4px;
+    font-size: 13px;
+}
+
+.form-item .btn {
+    grid-column: 1 / -1;
+    justify-self: start;
+}
+
+@media (min-width: 768px) {
+    .form-item {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* Campo sozinho no formulário, ou caixa de texto grande, ocupa a linha inteira */
+    .form-item .campo-item:only-of-type,
+    .form-item .campo-item:has(textarea) {
+        grid-column: 1 / -1;
+    }
+}
+
+/* ---------- Painel ---------- */
+
+.painel-semana {
+    margin: 0 0 8px;
+}
+
+/* ---------- Login e erro 500: uma janela estreita e centralizada ---------- */
+
+/* O topo fica no alto; as margens automáticas centralizam a janela no espaço que sobra */
+.pagina-centro .pagina {
+    min-height: 100vh;
+}
+
+.pagina-centro .janela {
+    width: 100%;
+    max-width: 460px;
+    margin: auto;
+}
+
+/* Páginas de destaque (login, 404, 500): conteúdo centralizado */
+
+.destaque {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.destaque h1 {
+    margin: 10px 0 4px;
+}
+
+.destaque p {
+    margin: 0;
+    color: var(--texto-suave);
+}
+
+.destaque-orbe {
+    width: 76px;
+    height: 76px;
+    animation: flutuar 6s ease-in-out infinite;
+}
+
+.destaque-orbe svg {
+    width: 38px;
+    height: 38px;
+}
+
+.destaque-numero {
+    font-size: 26px;
+    font-weight: 800;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.pagina-centro .formulario {
+    max-width: none;
+}
+
+.pagina-centro .botoes .btn,
+.destaque + .botoes .btn {
+    flex: 1;
+}
+
+.destaque + .botoes {
+    max-width: 420px;
+    margin-inline: auto;
+}
+
+@keyframes flutuar {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+/* ---------- Filtros que fecham no celular (o botão só aparece lá) ---------- */
+
+.filtros-recolhivel > summary {
+    display: none;
+    list-style: none;
+}
+
+.filtros-recolhivel > summary::-webkit-details-marker {
+    display: none;
+}
+
+@media (max-width: 767px) {
+    .filtros-recolhivel > summary {
+        display: inline-flex;
+        margin-bottom: 12px;
+    }
+
+    .filtros-recolhivel:not([open]) {
+        margin-bottom: 16px;
+    }
+
+    .filtros-recolhivel:not([open]) > summary {
+        margin-bottom: 0;
+    }
+}
+
+/* ---------- Painel e tela da tarefa: duas colunas em telas largas ---------- */
+
+.layout-painel > section > h2:first-child,
+.layout-painel > div > section:first-child > h2:first-child,
+.layout-detalhe > div > section:first-child > h2:first-child,
+.lateral > section:first-child > h2:first-child {
+    margin-top: 0;
+}
+
+.layout-painel,
+.layout-detalhe {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0 24px;
+}
+
+.lateral {
+    display: flex;
+    flex-direction: column;
+}
+
+@media (min-width: 900px) {
+    .layout-painel {
+        grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+        align-items: start;
+    }
+
+    .layout-detalhe {
+        grid-template-columns: minmax(0, 1fr) 300px;
+        align-items: start;
+    }
+
+    .lateral .ficha {
+        grid-template-columns: max-content 1fr;
+    }
+}
+
+/* ---------- Quadro: três colunas no estilo dos painéis do Explorer ---------- */
+
+.quadro {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+}
+
+@media (min-width: 860px) {
+    .quadro {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+.coluna {
+    display: flex;
+    flex-direction: column;
+    min-height: 200px;
+    border: 1px solid var(--caixa-borda);
+    border-radius: var(--raio-m);
+    background: rgba(255, 255, 255, 0.55);
+    box-shadow: var(--sombra-item);
+}
+
+.coluna-cabecalho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 34px;
+    padding: 4px 10px;
+    border-bottom: 1px solid #B6BFD6;
+    border-radius: var(--raio-m) var(--raio-m) 0 0;
+    background: linear-gradient(180deg, #FFFFFF 0%, #F1F2F9 50%, #E2E5F2 100%);
+}
+
+.coluna-cabecalho h2 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 400;
+}
+
+/* O total de cada coluna num orbe pequeno, com a cor da coluna */
+.coluna-total {
+    --orbe-claro: #E8EDF1;
+    --orbe-escuro: #8A9AA8;
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 6px;
+    border-radius: 12px;
+    background: radial-gradient(circle at 50% 30%, var(--orbe-claro) 0%, var(--orbe-escuro) 85%);
+    box-shadow: inset 0 -2px 3px rgba(0, 0, 0, 0.18), inset 0 1px 1px rgba(255, 255, 255, 0.6);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+}
+
+.coluna-em_andamento .coluna-total { --orbe-claro: #9EDCFB; --orbe-escuro: #0B7CC2; }
+.coluna-concluida .coluna-total { --orbe-claro: #C8F5AE; --orbe-escuro: #3C9A1E; }
+
+.coluna-cartoes {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 0 0 var(--raio-m) var(--raio-m);
+    transition: background var(--transicao);
+}
+
+/* Coluna onde o cartão vai cair: a seleção azul do Explorer */
+.coluna.alvo .coluna-cartoes {
+    background: var(--selecao-fundo);
+    box-shadow: inset 0 0 0 1px var(--selecao-borda);
+}
+
+.coluna-vazia {
+    margin: auto 0;
+    padding: 16px 8px;
+    border: 1px dashed var(--caixa-borda);
+    border-radius: var(--raio-m);
+    color: var(--texto-suave);
+    font-size: 12.5px;
+    text-align: center;
+}
+
+.coluna-cartoes:has(.cartao) .coluna-vazia {
+    display: none;
+}
+
+.coluna-rodape {
+    padding: 0 10px 10px;
+    font-size: 12px;
+}
+
+.cartao {
+    position: relative;
+    padding: 9px 10px 9px 13px;
+    border: 1px solid var(--caixa-borda);
+    border-radius: var(--raio-m);
+    background: var(--caixa-fundo);
+    box-shadow: var(--sombra-item);
+    cursor: grab;
+}
+
+.cartao:hover {
+    border-color: var(--caixa-hover-borda);
+    background: var(--caixa-hover-fundo);
+}
+
+.cartao:active {
+    cursor: grabbing;
+}
+
+.cartao.arrastando {
+    opacity: 0.5;
+}
+
+.cartao-titulo {
+    font-size: 13.5px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.coluna-concluida .cartao-titulo a {
+    color: var(--texto-suave);
+    text-decoration: line-through;
+}
+
+.cartao-detalhe {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 10px;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--texto-suave);
+}
+
+.cartao-detalhe svg {
+    width: 12px;
+    height: 12px;
+    vertical-align: -1px;
+}
+
+.cartao-rodape {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.cartao-rodape .marcadores {
+    margin-top: 0;
+    align-items: center;
+}
+
+.cartao-rodape .prioridade {
+    margin-left: 0;
+}
+
+.cartao-mover {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+}
+
+.cartao-mover .btn-icone {
+    width: 24px;
+    min-height: 22px;
+}
+
+.cartao-mover .btn-icone[hidden] {
+    display: none;
+}
+
+/* ---------- Calendário ---------- */
+
+.calendario-navegacao {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.calendario-navegacao h1 {
+    margin: 0 6px;
+    text-align: center;
+}
+
+/* Largura fixa só em telas largas, para as setas não pularem de um mês para outro */
+@media (min-width: 600px) {
+    .calendario-navegacao h1 {
+        min-width: 230px;
+    }
+}
+
+.calendario {
+    display: none;
+    border: 1px solid var(--caixa-borda);
+    border-radius: var(--raio-m);
+    background: #fff;
+    box-shadow: var(--sombra-item);
+    overflow: hidden;
+}
+
+.calendario-semana,
+.calendario-dias {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+/* Cabeçalho dos dias da semana: o brilho dos cabeçalhos de coluna do Explorer */
+.calendario-semana div {
+    padding: 5px 8px;
+    border-right: 1px solid #D5DAE6;
+    border-bottom: 1px solid #B6BFD6;
+    background: linear-gradient(180deg, #FFFFFF 0%, #F1F2F9 50%, #E2E5F2 100%);
+    color: var(--texto-suave);
+    font-size: 12px;
+}
+
+.calendario-semana div:last-child {
+    border-right: none;
+}
+
+.dia {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    min-height: 104px;
+    padding: 4px;
+    border-right: 1px solid #E1E7EE;
+    border-bottom: 1px solid #E1E7EE;
+}
+
+.dia:nth-child(7n) {
+    border-right: none;
+}
+
+.dia-fora {
+    background: #F4F7FA;
+}
+
+.dia-fora .dia-numero {
+    color: #9AA7B3;
+}
+
+.dia-numero {
+    align-self: flex-start;
+    min-width: 22px;
+    padding: 0 5px;
+    border: 1px solid transparent;
+    border-radius: var(--raio-p);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+}
+
+/* Hoje: o azul brilhante do botão principal */
+.dia-hoje {
+    background: linear-gradient(180deg, #F3F9FE 0%, #E3F0FB 100%);
+}
+
+.dia-hoje .dia-numero {
+    border-color: #0F4E8C;
+    background: linear-gradient(180deg, #5AA2DE 0%, #2F7FC6 50%, #155FA8 50%, #2370B8 100%);
+    color: #fff;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.35);
+}
+
+/* Cada tarefa é um "badge" com a cor da categoria. As cores padrão ficam num :where()
+   (peso zero) para as classes .cor-* de components.css poderem trocá-las. */
+:where(.evento) {
+    --badge-cor: #E1EAF0;
+    --badge-texto: #34506A;
+    --badge-borda: rgba(52, 80, 106, 0.25);
+}
+
+.evento {
+    display: block;
+    padding: 0 6px;
+    border: 1px solid var(--badge-borda);
+    border-radius: var(--raio-p);
+    background: linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 45%, var(--badge-cor) 55%, var(--badge-cor) 100%);
+    color: var(--badge-texto);
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1.6;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+a.evento:hover {
+    color: var(--badge-texto);
+    text-decoration: none;
+    filter: brightness(1.04) saturate(1.2);
+}
+
+.evento-atrasada { --badge-cor: #FFD3D3; --badge-texto: #8A1414; --badge-borda: rgba(166, 27, 27, 0.35); }
+
+.evento-concluida {
+    opacity: 0.65;
+    text-decoration: line-through;
+}
+
+.evento-hora {
+    font-weight: 400;
+}
+
+.dia-mais {
+    font-size: 11.5px;
+    color: var(--texto-suave);
+}
+
+.dia-mais summary {
+    padding: 0 4px;
+    cursor: pointer;
+}
+
+.dia-mais .evento {
+    margin-top: 3px;
+}
+
+/* No celular a grade dá lugar a uma lista dos dias com tarefa */
+.agenda-dia {
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--caixa-borda);
+    border-radius: var(--raio-m);
+    background: var(--caixa-fundo);
+}
+
+.agenda-dia h2 {
+    margin: 0 0 6px;
+    font-size: 15px;
+}
+
+.agenda-dia .evento {
+    margin-top: 4px;
+    font-size: 13px;
+    white-space: normal;
+}
+
+@media (min-width: 860px) {
+    .calendario {
+        display: block;
+    }
+
+    .agenda {
+        display: none;
+    }
+}
+
+.legenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    margin-top: 12px;
+    font-size: 12px;
+}

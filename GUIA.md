@@ -71,8 +71,8 @@ duas pastas com nomes parecidos, e vale não confundir:
 | `Suap2/Suap2APP/forms.py` | Formulários de cadastro, o de filtros e o da adição rápida |
 | `Suap2/Suap2APP/admin.py` | Como as tabelas aparecem no `/admin` |
 | `Suap2/Suap2APP/templates/Suap2APP/` | O HTML |
-| `Suap2/Suap2APP/static/Suap2APP/style.css` | Todo o CSS, com o tema claro e o escuro (arquivo único, sem framework) |
-| `Suap2/Suap2APP/static/Suap2APP/app.js` | O pouco de JavaScript: tema, quadro, adição rápida e atalhos (seção 9) |
+| `Suap2/Suap2APP/static/Suap2APP/css/` | O CSS do tema, no estilo dos sites da era Windows Vista, sem framework: `tokens.css` (cores, raios, sombras), `base.css` (fundo azul com aurora, tipografia), `components.css` (botões, campos, cards, diálogos…) e `pages.css` (layout de cada tela, incluindo quadro e calendário) |
+| `Suap2/Suap2APP/static/Suap2APP/js/` | O JavaScript, todo opcional: `aero.js` (botão de fechar das mensagens) e `app.js` (quadro, adição rápida e atalhos, seção 9). O site funciona sem eles |
 | `Suap2/Suap2APP/fixtures/exemplos.json` | Dados de exemplo (`loaddata exemplos`) |
 | `Suap2/media/` | Os anexos enviados; fora do Git |
 | `Suap2/Suap2APP/management/commands/enviar_lembretes.py` | Comando de e-mail |
@@ -530,12 +530,23 @@ isso é o servidor web; o Django nem registra a rota.
 
 ### Templates
 
-- `base.html` — o esqueleto: barra verde com o menu (só para quem está logado), as
-  mensagens de sucesso e as janelas de adição rápida e de atalhos. Todos os outros
-  templates fazem `{% extends %}` dele. O bloco `classe_conteudo` deixa uma página mais
-  estreita (`conteudo-estreito`), como fazem os formulários.
-- `_icones.html` — os ícones SVG, desenhados uma vez só e usados com
-  `<svg class="icone"><use href="#i-nome"></use></svg>`.
+- `base.html` — o esqueleto. Todos os outros templates fazem `{% extends %}` dele e
+  preenchem os blocos `title`, `content` e, se precisarem, `body_class` (o login usa
+  `pagina-centro` para a janela estreita), `extra_css` e `extra_js`. Ele junta os parciais
+  abaixo e, para quem está logado, as duas janelas de diálogo (adição rápida e atalhos):
+  - `_topo.html` — o nome "Suap2" sobre o fundo azul e, para quem está logado, o
+    usuário, a adição rápida, os atalhos, o Sair e a caixa de busca (ela só manda `?q=`
+    para a lista de tarefas). Os botões que dependem de JavaScript começam com `hidden`
+    e o `app.js` os mostra.
+  - `_navbar.html` — a barra preta do menu e a faixa clara dos cadastros, no alto da
+    janela, só para quem está logado. Marca o link da seção atual com
+    `aria-current` olhando o começo do nome da URL (`tarefa_detail` começa com `tarefa_`,
+    então acende "Tarefas").
+  - `_mensagens.html` — as mensagens do framework de *messages*, uma cor por tipo.
+  - `_icones.html` — um *sprite* SVG com todos os ícones, usados com
+    `<svg><use href="#i-nome"></use></svg>`.
+  - `_fundo.html` — o fundo azul com a aurora verde e ciano no topo, todo em CSS.
+  - `_rodape.html` — o rodapé.
 - `_prioridade.html` — a bandeirinha colorida da prioridade.
 - `_campo.html` — um campo de formulário completo: rótulo, widget, ajuda e erros. Grupos
   de caixas de seleção viram `<fieldset>` com `<legend>`. `form.html` e `_form_item.html`
@@ -607,21 +618,24 @@ terminal. Para enviar de verdade, veja a tabela de variáveis no README.
 |---|---|
 | Adicionar um campo na tarefa | `models.py` → `python manage.py makemigrations` → `fields` do `TarefaForm` → `_tarefa_item.html` → `admin.py` |
 | Novo filtro na lista | `TarefaFiltroForm`: cria o campo **e** o `if` correspondente em `filtrar()`. A barra de filtros se desenha sozinha |
-| Novo cadastro auxiliar (como Categoria) | modelo → migração → form → `FormularioMixin` + `ExclusaoMixin` em `views.py` → 4 rotas → um `_list.html` → link em `base.html` → `admin.py` |
+| Novo cadastro auxiliar (como Categoria) | modelo → migração → form → `FormularioMixin` + `ExclusaoMixin` em `views.py` → 4 rotas → um `_list.html` → link em `_navbar.html` → `admin.py` |
 | Novo tipo de item dentro da tarefa | modelo com FK CASCADE → form sem o campo `tarefa` → uma linha em `TarefaDetailView.FORMULARIOS` e outra em `TIPOS_DE_ITEM` → um bloco em `tarefa_detail.html` |
-| Nova cor de categoria | `Categoria.CORES` **e** a classe `.cor-<nome>` no `style.css` (mais as variáveis `--cat-<nome>-*` dos dois temas) |
+| Nova cor de categoria | `Categoria.CORES` **e** a classe `.cor-<nome>` em `css/components.css` |
 | Mudar o limite de tamanho do anexo | `TAMANHO_MAXIMO_ANEXO` em `forms.py` |
 | Mudar onde os anexos são guardados | `MEDIA_ROOT` em `settings.py`, ou o `upload_to` do `Anexo` |
 | Mudar a ordem da lista | `Meta.ordering` em `models.py` |
 | Mudar quantas tarefas por página | `paginate_by` em `TarefaListView` |
 | Mudar texto/assunto do e-mail | método `enviar()` do comando `enviar_lembretes` |
 | Mudar o prazo do lembrete | `--horas` na hora de rodar, ou o `default=24` em `add_arguments` |
-| Mudar cores, fontes, espaçamento | as variáveis no topo do `static/Suap2APP/style.css` (o tema escuro repete a lista com os valores escuros) |
+| Mudar cores, fontes, raios, sombras | as variáveis de `static/Suap2APP/css/tokens.css` |
+| Cores do fundo e da aurora | `--fundo-*` e `--aurora-*` em `tokens.css` |
+| Aurora mais lenta ou rápida | `--aurora-velocidade` em `tokens.css` (2 = metade da velocidade) |
+| Cores dos botões | as variáveis `--b1` a `--b4` de cada `.btn-*` em `css/components.css` |
 | Mudar quantos dias de concluídas o quadro mostra | `DIAS_DE_CONCLUIDAS` em `QuadroView` |
 | Ensinar uma palavra nova à adição rápida | o laço de `TarefaRapidaForm.clean` em `forms.py` |
-| Novo atalho de teclado | o `keydown` em `app.js` **e** a lista em `base.html` (janela de atalhos) |
+| Novo atalho de teclado | o `keydown` em `js/app.js` **e** a lista em `base.html` (janela de atalhos) |
 | Novo ícone | um `<symbol id="i-nome">` em `_icones.html` |
-| Mudar o menu | `templates/Suap2APP/base.html` |
+| Mudar o menu | `templates/Suap2APP/_navbar.html` |
 | Nova página | view em `views.py` → rota em `Suap2/Suap2/urls.py` → template |
 | Mudar colunas/filtros do `/admin` | `admin.py` |
 
@@ -694,25 +708,25 @@ Vale entender dois tipos de teste que se repetem:
 
 ## 9. Tema, quadro, calendário, histórico e adição rápida
 
-### O tema e o modo escuro
+### O tema (Aero)
 
-Todas as cores do site são variáveis CSS declaradas no topo do `style.css` (`--fundo`,
-`--superficie`, `--texto`, `--primaria`…). Nenhuma regra usa uma cor escrita à mão; elas
-sempre leem a variável. O modo escuro é só uma segunda lista de valores para as mesmas
-variáveis, e vale em dois casos:
+O visual imita os sites da era do Windows Vista: fundo azul com uma aurora verde e ciano
+animada, uma "janela" clara com borda azul-escura onde mora o conteúdo, a barra de menu
+preta brilhante, botões com o brilho dividido ao meio e a barra de progresso verde. Todas
+as cores, raios e sombras são variáveis em `css/tokens.css`; os outros arquivos só leem
+essas variáveis. A fonte é a Segoe UI (a do Vista), com alternativas para quem não a tem.
+Não há modo escuro, de propósito: o tema é claro como o original.
 
-- a pessoa clicou no botão de lua/sol, e o `app.js` gravou a escolha no `localStorage` e
-  pôs `data-theme="dark"` no `<html>`;
-- a pessoa nunca escolheu e o sistema dela está no modo escuro (`prefers-color-scheme`).
+As telas novas usam as mesmas peças. O quadro tem colunas com o cabeçalho dos painéis do
+Explorer e o total de cada coluna num orbe; a coluna onde o cartão vai cair ganha a
+seleção azul do Explorer. O calendário usa o mesmo brilho nos dias da semana, o dia de hoje
+leva o azul do botão principal, e cada tarefa é um *badge* com a cor da categoria. O
+histórico é uma linha do tempo com orbes pequenos (verde para concluída, azul para criada e
+iniciada, laranja para reaberta). A adição rápida e os atalhos abrem em `<dialog>` com
+barra de título de vidro e o botão vermelho de fechar.
 
-Um `<script>` pequeno no `<head>` do `base.html` aplica a escolha salva antes de a página
-ser desenhada, para ela não piscar clara antes de ficar escura. Os títulos usam a fonte
-Source Serif 4 e o texto a Source Sans 3, do Google Fonts; sem internet, o navegador cai
-para Georgia e para a fonte do sistema.
-
-O menu vira um botão ☰ em telas menores sem JavaScript nenhum: é um `<input type="checkbox">`
-escondido, e o CSS mostra o menu quando ele está marcado. Os filtros também começam
-fechados em telas pequenas (aí sim pelo `app.js`), a não ser que algum esteja em uso.
+No celular o menu rola de lado (o esmaecido na direita mostra que há mais) e os filtros
+começam fechados pelo `app.js`, a não ser que algum esteja em uso.
 
 ### Prioridade e a situação "em andamento"
 
@@ -767,7 +781,7 @@ histórico é só leitura.
 ### Adição rápida (`TarefaRapidaForm` e `tarefa_rapida`)
 
 A janela abre com a tecla **N** ou o botão de raio. O formulário não vem junto com cada
-página (o que custaria uma consulta a mais em todas): o `app.js` busca `/tarefas/rapida/`
+página (o que custaria uma consulta a mais em todas): o `js/app.js` busca `/tarefas/rapida/`
 quando a janela abre. Palavras especiais no texto preenchem os campos e saem do título:
 
 | No texto | Vira |

@@ -25,6 +25,9 @@ Se o banco não existir (você apagou, ou está montando um do zero), rode
 
 O mesmo usuário serve para o site (`http://127.0.0.1:8000/`) e para o `/admin`.
 
+Sem usar o terminal, também dá para **criar uma conta** pela tela de entrar ("Criar conta")
+ou **entrar como visitante**, que só olha. As duas coisas estão explicadas na seção 10.
+
 O Django **nunca guarda a senha em texto**, só um hash. Ou seja: não existe jeito de
 "descobrir" uma senha esquecida, só de trocá-la:
 
@@ -285,6 +288,10 @@ FormularioMixin                    login + mensagem de sucesso + template form.h
 ├── CategoriaFormularioMixin       │ cadastros auxiliares
 └── EtiquetaFormularioMixin        ┘
 
+LeituraMixin                       login, menos para o visitante que só está olhando (seção 10)
+├── PainelView, TarefaListView, TarefaDetailView, QuadroView, CalendarioView
+└── as listas e páginas de detalhe de Responsável, Projeto, Departamento, Categoria e Etiqueta
+
 ExclusaoMixin                      login + mensagem + template confirm_delete.html
 ├── DepartamentoDeleteView         cada uma só diz o título, a mensagem e o aviso
 ├── ProjetoDeleteView
@@ -516,6 +523,8 @@ Faz duas coisas:
 | `/etiquetas/…` | as quatro views de `Etiqueta` | `etiqueta_list`, `_create`, `_update`, `_delete` |
 | `/media/…` | os anexos, **só com `DEBUG=1`** | — |
 | `/entrar/` e `/sair/` | views prontas do Django | `login` e `logout` |
+| `/cadastrar/` | `CadastroView` (criar conta) | `cadastro` |
+| `/visitante/` | `entrar_como_visitante` (só POST) | `visitante` |
 | `/admin/` | admin do Django | — |
 
 Sempre use o **nome** da rota, nunca o endereço escrito à mão: assim, mudar a URL não
@@ -690,6 +699,8 @@ esperado do sistema:
 | `CalendarioTests` | Dia certo pela hora local, semanas completas, navegação, mês inválido, consultas |
 | `TarefaRapidaFormTests` / `TarefaRapidaViewTests` | Cada palavra especial da adição rápida, os erros e as respostas da view |
 | `TelasNovasTests` | Quadro, calendário e adição rápida exigem login e abrem com os dados de exemplo |
+| `CadastroTests` | Criar conta já entra, a conta não é administradora, senha diferente e usuário repetido são recusados |
+| `VisitanteTests` | O visitante vê todas as telas de consulta, não abre telas de alterar, nenhum POST dele muda o banco, e Sair encerra o modo |
 
 `BaseTestCase` no topo do arquivo cria um usuário e um responsável e já faz o login — é
 dele que a maioria das classes herda, junto com o atalho `criar_tarefa()`.
@@ -805,3 +816,42 @@ navegador). Sem dia nem hora, vale o campo de prazo e, se ele estiver vazio, ama
 | `?` | mostra a lista de atalhos |
 
 Os atalhos são ignorados enquanto você digita num campo ou quando há uma janela aberta.
+
+---
+
+## 10. Criar conta e modo visitante
+
+As duas coisas foram feitas **sem nenhum modelo novo**: o diagrama UML do sistema continua
+igual e não há migração.
+
+### Criar conta (`CadastroView`, `/cadastrar/`)
+
+É um `CreateView` com o `UserCreationForm`, o formulário de cadastro que já vem no Django
+(usuário, senha e confirmação, com as regras de senha de `AUTH_PASSWORD_VALIDATORS`). Ele
+grava no `User` do próprio Django, a mesma tabela do `createsuperuser`. Depois de salvar, a
+view já faz o `login()` da pessoa e manda para a lista de tarefas. Quem já entrou e abre
+`/cadastrar/` vai direto para o painel. A conta nova é comum: não é `is_staff`, então não
+entra no `/admin`.
+
+### Modo visitante
+
+O visitante não é um usuário: é só a marca `modo_visitante` na sessão do navegador, gravada
+por `entrar_como_visitante` (o botão "Entrar como visitante" da tela de entrar, só POST).
+
+- **O que ele pode abrir:** as views com `LeituraMixin`. Esse mixin é um `LoginRequiredMixin`
+  que deixa passar quem tem a marca na sessão, **só em GET**. Todo o resto continua com
+  `LoginRequiredMixin` ou `@login_required` como antes, então criar, editar, excluir,
+  concluir, mover no quadro, comentar e a adição rápida mandam o visitante para a tela de
+  entrar, que explica: "Para fazer alterações, entre com uma conta ou crie uma."
+- **O que ele vê:** o context processor `Suap2APP/context_processors.py` põe duas variáveis em
+  todo template: `visitante` (está no modo visitante) e `pode_editar` (está logado). O
+  `base.html` mostra o menu e um aviso amarelo para o visitante, e o topo troca o nome do
+  usuário por "Visitante", com links para criar conta e entrar. Os botões de alterar ficam
+  dentro de `{% if pode_editar %}`, e no quadro os cartões não são arrastáveis. Esconder os
+  botões é só para a tela fazer sentido: quem garante que nada muda são as views.
+- **Como sai:** "Sair" chama o logout do Django, que apaga a sessão inteira, marca incluída.
+  Entrar com uma conta também vale mais que a marca: `visitante` só é verdadeiro para quem
+  não está logado.
+
+Para acrescentar uma tela que o visitante possa ver, troque `LoginRequiredMixin` por
+`LeituraMixin` na view. Para uma tela que ele **não** deva ver, não precisa fazer nada.

@@ -13,7 +13,9 @@
         </div>
         <div class="acoes">
             <a class="btn" href="{% url 'quadro' %}"><svg aria-hidden="true"><use href="#i-quadro"></use></svg>Quadro</a>
+            {% if pode_editar %}
             <a class="btn btn-primary" href="{% url 'tarefa_create' %}">+ Nova tarefa</a>
+            {% endif %}
         </div>
     </div>
 

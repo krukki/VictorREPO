@@ -21,11 +21,19 @@
         {% include 'Suap2APP/_topo.html' %}
 
         <div class="janela">
-            {% if user.is_authenticated %}
-                {% include 'Suap2APP/_navbar.html' %}
-            {% endif %}
+            {% block navbar %}
+                {% if user.is_authenticated or visitante %}
+                    {% include 'Suap2APP/_navbar.html' %}
+                {% endif %}
+            {% endblock %}
 
             <main id="conteudo" class="conteudo" tabindex="-1">
+                {% if visitante %}
+                    <p class="aviso aviso-visitante">
+                        Você está no <strong>modo visitante</strong>: pode ver tudo, mas não alterar.
+                        <a href="{% url 'cadastro' %}">Criar uma conta</a> ou <a href="{% url 'login' %}">entrar</a>.
+                    </p>
+                {% endif %}
                 {% include 'Suap2APP/_mensagens.html' %}
                 {% block content %}{% endblock %}
             </main>
@@ -45,7 +53,9 @@
             </div>
             <div class="dialogo-corpo" data-conteudo-rapida><p class="vazio">Carregando…</p></div>
         </dialog>
+    {% endif %}
 
+    {% if user.is_authenticated or visitante %}
         <dialog class="dialogo" id="dialogo-atalhos" aria-labelledby="titulo-atalhos">
             <div class="dialogo-titulo">
                 <h2 id="titulo-atalhos"><svg aria-hidden="true"><use href="#i-teclado"></use></svg>Atalhos do teclado</h2>

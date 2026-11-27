@@ -5,7 +5,9 @@
 {% block content %}
     <div class="cabecalho">
         <h1>Projetos</h1>
+        {% if pode_editar %}
         <a class="btn btn-primary" href="{% url 'projeto_create' %}">+ Novo projeto</a>
+        {% endif %}
     </div>
 
     {% if projetos %}
@@ -26,10 +28,12 @@
                             {% endif %}
                         </div>
                     </div>
-                    <div class="acoes">
-                        <a class="btn btn-secondary btn-small" href="{% url 'projeto_update' projeto.pk %}">Editar</a>
-                        <a class="btn btn-danger btn-small" href="{% url 'projeto_delete' projeto.pk %}">Excluir</a>
-                    </div>
+                    {% if pode_editar %}
+                        <div class="acoes">
+                            <a class="btn btn-secondary btn-small" href="{% url 'projeto_update' projeto.pk %}">Editar</a>
+                            <a class="btn btn-danger btn-small" href="{% url 'projeto_delete' projeto.pk %}">Excluir</a>
+                        </div>
+                    {% endif %}
                 </div>
             {% endfor %}
         </div>

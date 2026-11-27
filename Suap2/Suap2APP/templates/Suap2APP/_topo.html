@@ -1,25 +1,36 @@
 {% comment %}
-O topo, direto sobre o fundo azul: o nome do sistema à esquerda e, para quem está
-logado, o usuário, a adição rápida, os atalhos, o Sair e a busca de tarefas à direita.
+O topo, direto sobre o fundo azul: o nome do sistema à esquerda e, à direita, a busca de
+tarefas e os links de quem está usando. Logado: usuário, adição rápida, atalhos e Sair.
+Visitante: "Visitante", atalhos, Criar conta, Entrar e Sair (que encerra o modo visitante).
 A busca só manda `q` para a lista de tarefas, que já sabe filtrar pelo título.
 Os botões de adição rápida e de atalhos só funcionam com JavaScript, por isso começam
 escondidos e o app.js os mostra.
 {% endcomment %}
 <header class="topo">
-    <a class="marca" href="{% if user.is_authenticated %}{% url 'painel' %}{% else %}{% url 'login' %}{% endif %}">
+    <a class="marca" href="{% if user.is_authenticated or visitante %}{% url 'painel' %}{% else %}{% url 'login' %}{% endif %}">
         Suap<span class="marca-versao">2</span>
     </a>
 
-    {% if user.is_authenticated %}
+    {% if user.is_authenticated or visitante %}
         <div class="topo-direita">
             <div class="topo-usuario">
-                <span>{{ user.get_username }}</span>
-                <span class="separador" aria-hidden="true" data-so-com-js hidden>|</span>
-                <button type="button" class="btn btn-link" data-abrir-rapida data-url="{% url 'tarefa_rapida' %}" data-so-com-js hidden title="Adição rápida (N)">
-                    <svg aria-hidden="true"><use href="#i-raio"></use></svg>Adição rápida
-                </button>
+                {% if user.is_authenticated %}
+                    <span>{{ user.get_username }}</span>
+                    <span class="separador" aria-hidden="true" data-so-com-js hidden>|</span>
+                    <button type="button" class="btn btn-link" data-abrir-rapida data-url="{% url 'tarefa_rapida' %}" data-so-com-js hidden title="Adição rápida (N)">
+                        <svg aria-hidden="true"><use href="#i-raio"></use></svg>Adição rápida
+                    </button>
+                {% else %}
+                    <span>Visitante</span>
+                {% endif %}
                 <span class="separador" aria-hidden="true" data-so-com-js hidden>|</span>
                 <button type="button" class="btn btn-link" data-abrir-atalhos data-so-com-js hidden title="Atalhos do teclado (?)">Atalhos</button>
+                {% if visitante %}
+                    <span class="separador" aria-hidden="true">|</span>
+                    <a href="{% url 'cadastro' %}">Criar conta</a>
+                    <span class="separador" aria-hidden="true">|</span>
+                    <a href="{% url 'login' %}">Entrar</a>
+                {% endif %}
                 <span class="separador" aria-hidden="true">|</span>
                 <form method="post" action="{% url 'logout' %}">
                     {% csrf_token %}

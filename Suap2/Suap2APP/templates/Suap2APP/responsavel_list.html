@@ -5,7 +5,9 @@
 {% block content %}
     <div class="cabecalho">
         <h1>Responsáveis</h1>
+        {% if pode_editar %}
         <a class="btn btn-primary" href="{% url 'responsavel_create' %}">+ Novo responsável</a>
+        {% endif %}
     </div>
 
     {% if responsaveis %}
@@ -21,10 +23,12 @@
                             {% if responsavel.telefone %} · {{ responsavel.telefone }}{% endif %}
                         </div>
                     </div>
-                    <div class="acoes">
-                        <a class="btn btn-secondary btn-small" href="{% url 'responsavel_update' responsavel.pk %}">Editar</a>
-                        <a class="btn btn-danger btn-small" href="{% url 'responsavel_delete' responsavel.pk %}">Excluir</a>
-                    </div>
+                    {% if pode_editar %}
+                        <div class="acoes">
+                            <a class="btn btn-secondary btn-small" href="{% url 'responsavel_update' responsavel.pk %}">Editar</a>
+                            <a class="btn btn-danger btn-small" href="{% url 'responsavel_delete' responsavel.pk %}">Excluir</a>
+                        </div>
+                    {% endif %}
                 </div>
             {% endfor %}
         </div>

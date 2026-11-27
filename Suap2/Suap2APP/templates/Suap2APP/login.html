@@ -4,6 +4,9 @@
 
 {% block body_class %}pagina-centro{% endblock %}
 
+{# A janela estreita não tem espaço para o menu #}
+{% block navbar %}{% endblock %}
+
 {% block content %}
     <div class="destaque">
         <h1>Entrar</h1>
@@ -15,6 +18,8 @@
 
         {% if form.errors %}
             <p class="erro erro-geral" role="alert">Usuário ou senha incorretos.</p>
+        {% elif visitante and next %}
+            <p class="erro erro-geral" role="alert">Para fazer alterações, entre com uma conta ou crie uma.</p>
         {% endif %}
 
         <div class="campo">
@@ -32,4 +37,17 @@
             <button type="submit" class="btn btn-primary">Entrar</button>
         </div>
     </form>
+
+    <div class="alternativas">
+        <p>Ainda não tem conta? <a href="{% url 'cadastro' %}">Criar conta</a></p>
+        {% if visitante %}
+            <a class="btn" href="{% url 'painel' %}">Continuar como visitante</a>
+        {% else %}
+            <form method="post" action="{% url 'visitante' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn">Entrar como visitante</button>
+            </form>
+        {% endif %}
+        <p class="ajuda">O visitante vê todas as telas, mas não pode alterar nada.</p>
+    </div>
 {% endblock %}

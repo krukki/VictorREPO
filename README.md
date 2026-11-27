@@ -29,7 +29,14 @@ python manage.py createsuperuser   # usuário para entrar no sistema e no /admin
 python manage.py runserver
 ```
 
-Acesse http://127.0.0.1:8000/ e entre com o usuário criado. Todas as páginas exigem login.
+Acesse http://127.0.0.1:8000/ e entre com o usuário criado. A tela de entrar também tem:
+
+- **Criar conta** (`/cadastrar/`): qualquer pessoa, por exemplo o professor, cria o próprio
+  usuário e já entra. Usa o `User` que vem no Django, então nenhum modelo do sistema muda e
+  o diagrama UML continua o mesmo. A conta nova não é administradora (não entra no `/admin`).
+- **Entrar como visitante**: vê todas as telas de consulta (painel, tarefas, quadro,
+  calendário, projetos, responsáveis e cadastros), mas não pode criar, editar, excluir nem
+  mover nada. É só uma marca na sessão do navegador; "Sair" encerra o modo visitante.
 
 Para começar com dados de exemplo (departamentos, projetos, categorias, etiquetas, tarefas
 e os itens delas):

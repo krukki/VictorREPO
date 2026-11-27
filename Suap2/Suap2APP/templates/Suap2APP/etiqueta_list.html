@@ -5,7 +5,9 @@
 {% block content %}
     <div class="cabecalho">
         <h1>Etiquetas</h1>
+        {% if pode_editar %}
         <a class="btn btn-primary" href="{% url 'etiqueta_create' %}">+ Nova etiqueta</a>
+        {% endif %}
     </div>
 
     {% if etiquetas %}
@@ -20,10 +22,12 @@
                             <a href="{% url 'tarefa_list' %}?etiqueta={{ etiqueta.pk }}">{{ etiqueta.total }} tarefa{{ etiqueta.total|pluralize }}</a>
                         </div>
                     </div>
-                    <div class="acoes">
-                        <a class="btn btn-secondary btn-small" href="{% url 'etiqueta_update' etiqueta.pk %}">Editar</a>
-                        <a class="btn btn-danger btn-small" href="{% url 'etiqueta_delete' etiqueta.pk %}">Excluir</a>
-                    </div>
+                    {% if pode_editar %}
+                        <div class="acoes">
+                            <a class="btn btn-secondary btn-small" href="{% url 'etiqueta_update' etiqueta.pk %}">Editar</a>
+                            <a class="btn btn-danger btn-small" href="{% url 'etiqueta_delete' etiqueta.pk %}">Excluir</a>
+                        </div>
+                    {% endif %}
                 </div>
             {% endfor %}
         </div>

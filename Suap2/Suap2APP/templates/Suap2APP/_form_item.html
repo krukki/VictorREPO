@@ -3,6 +3,7 @@ Formulário de adicionar um item na tela da tarefa. Quem inclui define:
 `form`, `acao` (o que vai no campo escondido lido pela TarefaDetailView),
 `rotulo` do botão e, quando houver upload, `arquivo=True`.
 {% endcomment %}
+{% if pode_editar %}
 <form method="post" class="form-item"{% if arquivo %} enctype="multipart/form-data"{% endif %}>
     {% csrf_token %}
     <input type="hidden" name="acao" value="{{ acao }}">
@@ -17,3 +18,4 @@ Formulário de adicionar um item na tela da tarefa. Quem inclui define:
 
     <button type="submit" class="btn btn-secondary btn-small">{{ rotulo }}</button>
 </form>
+{% endif %}

@@ -15,6 +15,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('entrar/', auth_views.LoginView.as_view(template_name='Suap2APP/login.html'), name='login'),
     path('sair/', auth_views.LogoutView.as_view(), name='logout'),
+    path('cadastrar/', views.CadastroView.as_view(), name='cadastro'),
+    path('visitante/', views.entrar_como_visitante, name='visitante'),
     path('painel/', views.PainelView.as_view(), name='painel'),
     path('', views.TarefaListView.as_view(), name='tarefa_list'),
     path('tarefas/nova/', views.TarefaCreateView.as_view(), name='tarefa_create'),

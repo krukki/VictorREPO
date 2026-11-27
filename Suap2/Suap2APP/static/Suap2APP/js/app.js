@@ -61,7 +61,8 @@
         janelaRapida.showModal();
         fetch(botaoRapida.dataset.url, { credentials: 'same-origin' })
             .then(function (resposta) {
-                if (!resposta.ok) throw new Error(resposta.status);
+                // Sessão expirada: o Django manda para o login, e o fetch segue o redirecionamento
+                if (!resposta.ok || resposta.redirected) throw new Error(resposta.status);
                 return resposta.text();
             })
             .then(function (html) {
@@ -90,7 +91,10 @@
             var botao = form.querySelector('button[type="submit"]');
             botao.disabled = true;
             postar(form.action, new FormData(form))
-                .then(function (resposta) { return resposta.json(); })
+                .then(function (resposta) {
+                    if (resposta.redirected) throw new Error('login');
+                    return resposta.json();
+                })
                 .then(function (dados) {
                     if (dados.ok) {
                         if (responsavel && responsavel.value) gravar(CHAVE_RESPONSAVEL, responsavel.value);
@@ -200,7 +204,7 @@
         dados.append('situacao', colunaDestino.dataset.coluna);
         postar(cartao.dataset.url, dados)
             .then(function (resposta) {
-                if (!resposta.ok) throw new Error(resposta.status);
+                if (!resposta.ok || resposta.redirected) throw new Error(resposta.status);
             })
             .catch(function () {
                 colunaOrigem.querySelector('[data-cartoes]').prepend(cartao);

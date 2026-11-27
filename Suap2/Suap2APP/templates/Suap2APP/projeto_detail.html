@@ -15,7 +15,9 @@
                 {% if horas %} · {{ horas|floatformat:"-2" }} h registradas{% endif %}
             </div>
         </div>
+        {% if pode_editar %}
         <a class="btn btn-secondary" href="{% url 'projeto_update' projeto.pk %}">Editar</a>
+        {% endif %}
     </div>
 
     {% if projeto.descricao %}

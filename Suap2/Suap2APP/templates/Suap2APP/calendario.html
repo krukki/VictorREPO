@@ -1,0 +1,94 @@
+{% extends 'Suap2APP/base.html' %}
+
+{% block title %}Calendário — Suap2{% endblock %}
+
+{% block content %}
+    <div class="cabecalho">
+        <div class="calendario-navegacao">
+            <a class="botao-icone btn-secondary" href="{% querystring mes=mes_anterior %}" title="Mês anterior">
+                <svg class="icone" aria-hidden="true"><use href="#i-seta-esq"></use></svg><span class="sr-only">Mês anterior</span>
+            </a>
+            <h1>{{ mes|date:"F \d\e Y"|capfirst }}</h1>
+            <a class="botao-icone btn-secondary" href="{% querystring mes=mes_proximo %}" title="Próximo mês">
+                <svg class="icone" aria-hidden="true"><use href="#i-seta-dir"></use></svg><span class="sr-only">Próximo mês</span>
+            </a>
+            {% if not e_mes_atual %}
+                <a class="btn btn-secondary btn-small" href="{% querystring mes=None %}">Hoje</a>
+            {% endif %}
+        </div>
+        <a class="btn btn-primary" href="{% url 'tarefa_create' %}">
+            <svg class="icone" aria-hidden="true"><use href="#i-mais"></use></svg>Nova tarefa
+        </a>
+    </div>
+
+    <details class="filtros-recolhivel" data-filtros{% if filtrando %} data-filtrando{% endif %} open>
+        <summary class="btn btn-secondary">Filtros{% if filtrando %} (ativos){% endif %}</summary>
+        <form method="get" class="filtros filtros-linha" role="search">
+            <input type="hidden" name="mes" value="{{ mes|date:'Y-m' }}">
+            <div class="filtro-busca">
+                <label for="{{ filtro.q.id_for_label }}">{{ filtro.q.label }}</label>
+                {{ filtro.q }}
+            </div>
+            {% for campo in filtro %}
+                {% if campo.name == 'responsavel' or campo.name == 'projeto' or campo.name == 'categoria' or campo.name == 'prioridade' %}
+                    <div>
+                        <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+                        {{ campo }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+            <div class="filtro-botoes">
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+                {% if filtrando %}
+                    <a class="btn btn-link" href="?mes={{ mes|date:'Y-m' }}">Limpar</a>
+                {% endif %}
+            </div>
+        </form>
+    </details>
+
+    <div class="calendario" role="grid" aria-label="{{ mes|date:'F \d\e Y' }}">
+        <div class="calendario-semana" role="row">
+            {% for nome in dias_da_semana %}<div role="columnheader">{{ nome }}</div>{% endfor %}
+        </div>
+        {% for semana in semanas %}
+            <div class="calendario-dias" role="row">
+                {% for dia in semana %}
+                    <div class="dia{% if dia.fora %} dia-fora{% endif %}{% if dia.hoje %} dia-hoje{% endif %}" role="gridcell">
+                        <span class="dia-numero">{{ dia.data.day }}</span>
+                        {% for tarefa in dia.tarefas|slice:":3" %}
+                            {% include 'Suap2APP/_evento.html' %}
+                        {% endfor %}
+                        {% if dia.tarefas|length > 3 %}
+                            <details class="dia-mais">
+                                <summary>+{{ dia.tarefas|length|add:"-3" }} mais</summary>
+                                {% for tarefa in dia.tarefas|slice:"3:" %}
+                                    {% include 'Suap2APP/_evento.html' %}
+                                {% endfor %}
+                            </details>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+
+    {# No celular a grade vira uma lista só com os dias que têm tarefa #}
+    <div class="agenda">
+        {% for dia in agenda %}
+            <section class="agenda-dia">
+                <h2>{{ dia.data|date:"l, j \d\e F"|capfirst }}{% if dia.hoje %} · hoje{% endif %}</h2>
+                {% for tarefa in dia.tarefas %}
+                    {% include 'Suap2APP/_evento.html' %}
+                {% endfor %}
+            </section>
+        {% empty %}
+            <p class="vazio">Nenhuma tarefa com prazo neste mês.</p>
+        {% endfor %}
+    </div>
+
+    <div class="legenda">
+        <span class="evento cor-azul">Na cor da categoria</span>
+        <span class="evento evento-atrasada">Atrasada</span>
+        <span class="evento cor-cinza evento-concluida">Concluída</span>
+    </div>
+{% endblock %}

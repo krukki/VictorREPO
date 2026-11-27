@@ -5,66 +5,83 @@
 {% block content %}
     <div class="cabecalho">
         <h1>Minhas tarefas</h1>
-        <a class="btn btn-primary" href="{% url 'tarefa_create' %}">+ Nova tarefa</a>
-    </div>
-
-    <div class="contadores">
-        <a class="contador{% if not status_atual %} contador-ativo{% endif %}" href="{% querystring status=None page=None %}">
-            <strong>{{ total }}</strong> no total
-        </a>
-        <a class="contador{% if status_atual == 'pendentes' %} contador-ativo{% endif %}" href="{% querystring status='pendentes' page=None %}">
-            <strong>{{ pendentes }}</strong> pendente{{ pendentes|pluralize }}
-        </a>
-        <a class="contador{% if atrasadas %} contador-alerta{% endif %}{% if status_atual == 'atrasadas' %} contador-ativo{% endif %}" href="{% querystring status='atrasadas' page=None %}">
-            <strong>{{ atrasadas }}</strong> atrasada{{ atrasadas|pluralize }}
-        </a>
-        <a class="contador{% if status_atual == 'concluidas' %} contador-ativo{% endif %}" href="{% querystring status='concluidas' page=None %}">
-            <strong>{{ concluidas }}</strong> concluída{{ concluidas|pluralize }}
-        </a>
-    </div>
-
-    <form method="get" class="filtros">
-        <div class="filtro-busca">
-            <label for="{{ filtro.q.id_for_label }}">{{ filtro.q.label }}</label>
-            {{ filtro.q }}
+        <div class="acoes">
+            <a class="btn btn-secondary" href="{% url 'quadro' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
+                <svg class="icone" aria-hidden="true"><use href="#i-quadro"></use></svg>Ver no quadro
+            </a>
+            <a class="btn btn-primary" href="{% url 'tarefa_create' %}">
+                <svg class="icone" aria-hidden="true"><use href="#i-mais"></use></svg>Nova tarefa
+            </a>
         </div>
-        {% for campo in filtro %}
-            {% if campo.name != 'q' %}
-                <div>
-                    <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
-                    {{ campo }}
+    </div>
+
+    <div class="layout-lista">
+        <details class="filtros-recolhivel" data-filtros{% if filtrando %} data-filtrando{% endif %} open>
+            <summary class="btn btn-secondary">Filtros{% if filtrando %} (ativos){% endif %}</summary>
+            <form method="get" class="filtros" role="search">
+                <div class="filtro-busca">
+                    <label for="{{ filtro.q.id_for_label }}">{{ filtro.q.label }}</label>
+                    {{ filtro.q }}
                 </div>
-            {% endif %}
-        {% endfor %}
-        <div class="filtro-botoes">
-            <button type="submit" class="btn btn-secondary">Filtrar</button>
-            {% if filtrando %}
-                <a class="btn btn-link" href="{% url 'tarefa_list' %}">Limpar</a>
+                {% for campo in filtro %}
+                    {% if campo.name != 'q' %}
+                        <div>
+                            <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+                            {{ campo }}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                <div class="filtro-botoes">
+                    <button type="submit" class="btn btn-primary">Filtrar</button>
+                    {% if filtrando %}
+                        <a class="btn btn-link" href="{% url 'tarefa_list' %}">Limpar</a>
+                    {% endif %}
+                </div>
+            </form>
+        </details>
+
+        <div>
+            <div class="contadores">
+                <a class="contador{% if not status_atual %} contador-ativo{% endif %}" href="{% querystring status=None page=None %}">
+                    <strong>{{ total }}</strong> no total
+                </a>
+                <a class="contador{% if status_atual == 'pendentes' %} contador-ativo{% endif %}" href="{% querystring status='pendentes' page=None %}">
+                    <strong>{{ pendentes }}</strong> pendente{{ pendentes|pluralize }}
+                </a>
+                <a class="contador{% if status_atual == 'em_andamento' %} contador-ativo{% endif %}" href="{% querystring status='em_andamento' page=None %}">
+                    <strong>{{ em_andamento }}</strong> em andamento
+                </a>
+                <a class="contador{% if atrasadas %} contador-alerta{% endif %}{% if status_atual == 'atrasadas' %} contador-ativo{% endif %}" href="{% querystring status='atrasadas' page=None %}">
+                    <strong>{{ atrasadas }}</strong> atrasada{{ atrasadas|pluralize }}
+                </a>
+                <a class="contador{% if status_atual == 'concluidas' %} contador-ativo{% endif %}" href="{% querystring status='concluidas' page=None %}">
+                    <strong>{{ concluidas }}</strong> concluída{{ concluidas|pluralize }}
+                </a>
+            </div>
+
+            {% if tarefas %}
+                <div class="lista">
+                    {% for tarefa in tarefas %}
+                        {% include 'Suap2APP/_tarefa_item.html' with mostrar_responsavel=True %}
+                    {% endfor %}
+                </div>
+
+                {% if is_paginated %}
+                    <nav class="paginacao" aria-label="Páginas">
+                        {% if page_obj.has_previous %}
+                            <a class="btn btn-secondary btn-small" href="{% querystring page=page_obj.previous_page_number %}">‹ Anterior</a>
+                        {% endif %}
+                        <span>Página {{ page_obj.number }} de {{ paginator.num_pages }}</span>
+                        {% if page_obj.has_next %}
+                            <a class="btn btn-secondary btn-small" href="{% querystring page=page_obj.next_page_number %}">Próxima ›</a>
+                        {% endif %}
+                    </nav>
+                {% endif %}
+            {% elif filtrando %}
+                <p class="vazio">Nenhuma tarefa encontrada com esses filtros.</p>
+            {% else %}
+                <p class="vazio">Nenhuma tarefa cadastrada ainda.</p>
             {% endif %}
         </div>
-    </form>
-
-    {% if tarefas %}
-        <div class="lista">
-            {% for tarefa in tarefas %}
-                {% include 'Suap2APP/_tarefa_item.html' with mostrar_responsavel=True %}
-            {% endfor %}
-        </div>
-
-        {% if is_paginated %}
-            <nav class="paginacao" aria-label="Páginas">
-                {% if page_obj.has_previous %}
-                    <a class="btn btn-secondary btn-small" href="{% querystring page=page_obj.previous_page_number %}">‹ Anterior</a>
-                {% endif %}
-                <span>Página {{ page_obj.number }} de {{ paginator.num_pages }}</span>
-                {% if page_obj.has_next %}
-                    <a class="btn btn-secondary btn-small" href="{% querystring page=page_obj.next_page_number %}">Próxima ›</a>
-                {% endif %}
-            </nav>
-        {% endif %}
-    {% elif filtrando %}
-        <p class="vazio">Nenhuma tarefa encontrada com esses filtros.</p>
-    {% else %}
-        <p class="vazio">Nenhuma tarefa cadastrada ainda.</p>
-    {% endif %}
+    </div>
 {% endblock %}

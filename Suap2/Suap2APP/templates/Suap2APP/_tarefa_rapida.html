@@ -1,0 +1,35 @@
+{% comment %}
+Formulário da janela de adição rápida. O app.js busca este pedaço de página em
+tarefas/rapida/ quando a janela abre e manda o formulário por fetch.
+{% endcomment %}
+<form method="post" action="{% url 'tarefa_rapida' %}" class="formulario" data-form-rapida>
+    {% csrf_token %}
+    <div class="erro" data-erros-rapida role="alert" hidden></div>
+
+    <div class="campo">
+        <label for="{{ form.texto.id_for_label }}">{{ form.texto.label }}</label>
+        {{ form.texto }}
+    </div>
+
+    <p class="dicas">
+        <code>@nome</code> responsável · <code>#etiqueta</code> · <code>!alta</code> <code>!baixa</code> prioridade ·
+        <code>hoje</code> <code>amanhã</code> <code>25/12</code> dia · <code>14h</code> <code>14h30</code> hora
+    </p>
+
+    <div class="rapida-campos">
+        <div class="campo">
+            <label for="{{ form.pessoa_responsavel.id_for_label }}">{{ form.pessoa_responsavel.label }}</label>
+            {{ form.pessoa_responsavel }}
+        </div>
+        <div class="campo">
+            <label for="{{ form.prazo.id_for_label }}">{{ form.prazo.label }}</label>
+            {{ form.prazo }}
+            <p class="ajuda">Vazio e sem dia no texto: amanhã às 17h.</p>
+        </div>
+    </div>
+
+    <div class="botoes">
+        <button type="submit" class="btn btn-primary">Criar tarefa</button>
+        <a class="btn btn-secondary" href="{% url 'tarefa_create' %}">Formulário completo</a>
+    </div>
+</form>

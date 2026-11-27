@@ -3,28 +3,33 @@
 {% block title %}Entrar — Suap2{% endblock %}
 
 {% block content %}
-    <h1>Entrar</h1>
-
-    <form method="post" class="formulario">
-        {% csrf_token %}
-
-        {% if form.errors %}
-            <div class="erro">Usuário ou senha incorretos.</div>
-        {% endif %}
-
-        <div>
-            <label for="{{ form.username.id_for_label }}">Usuário</label>
-            {{ form.username }}
-        </div>
-        <div>
-            <label for="{{ form.password.id_for_label }}">Senha</label>
-            {{ form.password }}
+    <div class="caixa login">
+        <div class="login-cabecalho">
+            <h1>Entrar</h1>
+            <p class="item-detalhe">Gerenciador de tarefas Suap2</p>
         </div>
 
-        <input type="hidden" name="next" value="{{ next }}">
+        <form method="post" class="formulario">
+            {% csrf_token %}
 
-        <div class="botoes">
-            <button type="submit" class="btn btn-primary">Entrar</button>
-        </div>
-    </form>
+            {% if form.errors %}
+                <div class="erro">Usuário ou senha incorretos.</div>
+            {% endif %}
+
+            <div>
+                <label for="{{ form.username.id_for_label }}">Usuário</label>
+                {{ form.username }}
+            </div>
+            <div>
+                <label for="{{ form.password.id_for_label }}">Senha</label>
+                {{ form.password }}
+            </div>
+
+            <input type="hidden" name="next" value="{{ next }}">
+
+            <div class="botoes">
+                <button type="submit" class="btn btn-primary">Entrar</button>
+            </div>
+        </form>
+    </div>
 {% endblock %}

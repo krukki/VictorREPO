@@ -18,27 +18,29 @@
                 · Criada em {{ tarefa.criada_em|date:"d/m/Y H:i" }}
             </div>
         </div>
-        <div class="acoes">
-            {% if situacao == 'a_fazer' %}
-                <form method="post" action="{% url 'tarefa_mover' tarefa.pk %}">
+        {% if pode_editar %}
+            <div class="acoes">
+                {% if situacao == 'a_fazer' %}
+                    <form method="post" action="{% url 'tarefa_mover' tarefa.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="situacao" value="em_andamento">
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <button type="submit" class="btn btn-small">
+                            <svg aria-hidden="true"><use href="#i-play"></use></svg>Iniciar
+                        </button>
+                    </form>
+                {% endif %}
+                <form method="post" action="{% url 'tarefa_toggle' tarefa.pk %}">
                     {% csrf_token %}
-                    <input type="hidden" name="situacao" value="em_andamento">
                     <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                    <button type="submit" class="btn btn-small">
-                        <svg aria-hidden="true"><use href="#i-play"></use></svg>Iniciar
+                    <button type="submit" class="btn {% if tarefa.concluida_em %}btn-secondary{% else %}btn-success{% endif %} btn-small">
+                        {% if tarefa.concluida_em %}Reabrir{% else %}Concluir{% endif %}
                     </button>
                 </form>
-            {% endif %}
-            <form method="post" action="{% url 'tarefa_toggle' tarefa.pk %}">
-                {% csrf_token %}
-                <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                <button type="submit" class="btn {% if tarefa.concluida_em %}btn-secondary{% else %}btn-success{% endif %} btn-small">
-                    {% if tarefa.concluida_em %}Reabrir{% else %}Concluir{% endif %}
-                </button>
-            </form>
-            <a class="btn btn-secondary btn-small" href="{% url 'tarefa_update' tarefa.pk %}">Editar</a>
-            <a class="btn btn-danger btn-small" href="{% url 'tarefa_delete' tarefa.pk %}">Excluir</a>
-        </div>
+                <a class="btn btn-secondary btn-small" href="{% url 'tarefa_update' tarefa.pk %}">Editar</a>
+                <a class="btn btn-danger btn-small" href="{% url 'tarefa_delete' tarefa.pk %}">Excluir</a>
+            </div>
+        {% endif %}
     </div>
 
     <div class="layout-detalhe">
@@ -57,12 +59,14 @@
                                     <span class="{% if subtarefa.concluida %}concluida{% endif %}">{{ subtarefa.descricao }}</span>
                                 </div>
                                 <div class="acoes">
-                                    <form method="post" action="{% url 'subtarefa_toggle' subtarefa.pk %}">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-secondary btn-small">
-                                            {% if subtarefa.concluida %}Desmarcar{% else %}Marcar{% endif %}
-                                        </button>
-                                    </form>
+                                    {% if pode_editar %}
+                                        <form method="post" action="{% url 'subtarefa_toggle' subtarefa.pk %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-secondary btn-small">
+                                                {% if subtarefa.concluida %}Desmarcar{% else %}Marcar{% endif %}
+                                            </button>
+                                        </form>
+                                    {% endif %}
                                     {% include 'Suap2APP/_item_excluir.html' with tipo='subtarefa' pk=subtarefa.pk %}
                                 </div>
                             </div>

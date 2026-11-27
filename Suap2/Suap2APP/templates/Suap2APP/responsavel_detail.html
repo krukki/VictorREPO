@@ -14,7 +14,9 @@
                 {% if horas %} · {{ horas|floatformat:"-2" }} h registradas{% endif %}
             </div>
         </div>
+        {% if pode_editar %}
         <a class="btn btn-secondary" href="{% url 'responsavel_update' responsavel.pk %}">Editar</a>
+        {% endif %}
     </div>
 
     <div class="contadores">

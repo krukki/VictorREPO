@@ -3,8 +3,11 @@ import re
 from collections import defaultdict
 from datetime import date, datetime, time, timedelta
 
+from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Count, Prefetch, ProtectedError, Q, Sum
@@ -47,6 +50,54 @@ from .forms import (
 )
 
 
+# Modo visitante: uma marca na sessão, sem usuário nem tabela nova. O visitante pode abrir
+# as telas de consulta (as que usam LeituraMixin), só com GET. Qualquer alteração continua
+# exigindo login, e quem tenta cai na tela de entrar, que explica o motivo.
+
+SESSAO_VISITANTE = 'modo_visitante'
+
+
+def e_visitante(request):
+    return not request.user.is_authenticated and request.session.get(SESSAO_VISITANTE, False)
+
+
+class LeituraMixin(LoginRequiredMixin):
+    """Exige login, menos para o visitante que só está olhando (GET/HEAD)."""
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.method in ('GET', 'HEAD') and e_visitante(request):
+            # Pula a checagem do LoginRequiredMixin e segue direto para a view
+            return super(LoginRequiredMixin, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
+
+
+@require_POST
+def entrar_como_visitante(request):
+    if request.user.is_authenticated:
+        return redirect('painel')
+    request.session[SESSAO_VISITANTE] = True
+    messages.info(request, 'Você entrou como visitante: pode ver tudo, mas não alterar nada.')
+    return redirect('painel')
+
+
+class CadastroView(CreateView):
+    """Criar conta. Usa o User do próprio Django: nenhum modelo do sistema muda."""
+    form_class = UserCreationForm
+    template_name = 'Suap2APP/cadastro.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return redirect('painel')
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        usuario = form.save()
+        self.request.session.pop(SESSAO_VISITANTE, None)
+        login(self.request, usuario)
+        messages.success(self.request, f'Conta criada. Boas-vindas, {usuario.get_username()}!')
+        return redirect(settings.LOGIN_REDIRECT_URL)
+
+
 class FormularioMixin(LoginRequiredMixin, SuccessMessageMixin):
     """Configuração comum das telas de criar/editar, que usam o mesmo template."""
     template_name = 'Suap2APP/form.html'
@@ -83,7 +134,7 @@ class ExclusaoMixin(LoginRequiredMixin, SuccessMessageMixin):
         return self.mensagem_exclusao % self.object
 
 
-class PainelView(LoginRequiredMixin, TemplateView):
+class PainelView(LeituraMixin, TemplateView):
     """Resumo das tarefas; as condições seguem as de TarefaFiltroForm.filtrar."""
     template_name = 'Suap2APP/painel.html'
 
@@ -133,7 +184,7 @@ def contar_por_situacao(tarefas, agora):
 
 # Tarefas
 
-class TarefaListView(LoginRequiredMixin, ListView):
+class TarefaListView(LeituraMixin, ListView):
     model = Tarefa
     context_object_name = 'tarefas'
     paginate_by = 10
@@ -157,7 +208,7 @@ class TarefaListView(LoginRequiredMixin, ListView):
         return context
 
 
-class TarefaDetailView(LoginRequiredMixin, DetailView):
+class TarefaDetailView(LeituraMixin, DetailView):
     """Tarefa com seus itens: subtarefas, comentários, anexos e horas.
 
     Os quatro formulários de adicionar moram nesta mesma página e são postados aqui,
@@ -355,7 +406,7 @@ def subtarefa_toggle(request, pk):
 
 # Responsáveis
 
-class ResponsavelListView(LoginRequiredMixin, ListView):
+class ResponsavelListView(LeituraMixin, ListView):
     model = Responsavel
     context_object_name = 'responsaveis'
 
@@ -363,7 +414,7 @@ class ResponsavelListView(LoginRequiredMixin, ListView):
         return Responsavel.objects.select_related('departamento')
 
 
-class ResponsavelDetailView(LoginRequiredMixin, DetailView):
+class ResponsavelDetailView(LeituraMixin, DetailView):
     model = Responsavel
 
     def get_queryset(self):
@@ -418,7 +469,7 @@ class ResponsavelDeleteView(LoginRequiredMixin, SuccessMessageMixin, DeleteView)
 
 # Departamentos
 
-class DepartamentoListView(LoginRequiredMixin, ListView):
+class DepartamentoListView(LeituraMixin, ListView):
     model = Departamento
     context_object_name = 'departamentos'
 
@@ -461,7 +512,7 @@ class DepartamentoDeleteView(ExclusaoMixin, DeleteView):
 
 # Projetos
 
-class ProjetoListView(LoginRequiredMixin, ListView):
+class ProjetoListView(LeituraMixin, ListView):
     model = Projeto
     context_object_name = 'projetos'
 
@@ -473,7 +524,7 @@ class ProjetoListView(LoginRequiredMixin, ListView):
         )
 
 
-class ProjetoDetailView(LoginRequiredMixin, DetailView):
+class ProjetoDetailView(LeituraMixin, DetailView):
     model = Projeto
 
     def get_queryset(self):
@@ -523,7 +574,7 @@ class ProjetoDeleteView(ExclusaoMixin, DeleteView):
 
 # Categorias
 
-class CategoriaListView(LoginRequiredMixin, ListView):
+class CategoriaListView(LeituraMixin, ListView):
     model = Categoria
     context_object_name = 'categorias'
 
@@ -562,7 +613,7 @@ class CategoriaDeleteView(ExclusaoMixin, DeleteView):
 
 # Etiquetas
 
-class EtiquetaListView(LoginRequiredMixin, ListView):
+class EtiquetaListView(LeituraMixin, ListView):
     model = Etiqueta
     context_object_name = 'etiquetas'
 
@@ -601,7 +652,7 @@ class EtiquetaDeleteView(ExclusaoMixin, DeleteView):
 
 # Quadro (kanban)
 
-class QuadroView(LoginRequiredMixin, TemplateView):
+class QuadroView(LeituraMixin, TemplateView):
     """As tarefas em três colunas, uma por situação. Arrastar um cartão chama tarefa_mover."""
     template_name = 'Suap2APP/quadro.html'
     DIAS_DE_CONCLUIDAS = 30
@@ -644,7 +695,7 @@ MES = re.compile(r'(\d{4})-(\d{1,2})')
 DIAS_DA_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
 
-class CalendarioView(LoginRequiredMixin, TemplateView):
+class CalendarioView(LeituraMixin, TemplateView):
     """Um mês por vez, com cada tarefa no dia do prazo. O mês vem de ?mes=AAAA-MM."""
     template_name = 'Suap2APP/calendario.html'
 

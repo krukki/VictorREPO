@@ -9,7 +9,9 @@
             <a class="btn" href="{% url 'quadro' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
                 <svg aria-hidden="true"><use href="#i-quadro"></use></svg>Ver no quadro
             </a>
+            {% if pode_editar %}
             <a class="btn btn-primary" href="{% url 'tarefa_create' %}">+ Nova tarefa</a>
+            {% endif %}
         </div>
     </div>
 

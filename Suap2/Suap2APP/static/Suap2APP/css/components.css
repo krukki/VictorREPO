@@ -1287,3 +1287,12 @@ kbd {
     font: 12px var(--fonte);
     text-align: center;
 }
+
+/* Links do topo (Criar conta, Entrar) com a mesma cara dos botões-link brancos */
+.topo-usuario a {
+    color: #fff;
+}
+
+.topo-usuario a:hover {
+    color: #fff;
+}

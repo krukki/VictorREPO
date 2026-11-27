@@ -5,7 +5,9 @@
 {% block content %}
     <div class="cabecalho">
         <h1>Departamentos</h1>
+        {% if pode_editar %}
         <a class="btn btn-primary" href="{% url 'departamento_create' %}">+ Novo departamento</a>
+        {% endif %}
     </div>
 
     {% if departamentos %}
@@ -20,10 +22,12 @@
                             · {{ departamento.total_projetos }} projeto{{ departamento.total_projetos|pluralize }}
                         </div>
                     </div>
-                    <div class="acoes">
-                        <a class="btn btn-secondary btn-small" href="{% url 'departamento_update' departamento.pk %}">Editar</a>
-                        <a class="btn btn-danger btn-small" href="{% url 'departamento_delete' departamento.pk %}">Excluir</a>
-                    </div>
+                    {% if pode_editar %}
+                        <div class="acoes">
+                            <a class="btn btn-secondary btn-small" href="{% url 'departamento_update' departamento.pk %}">Editar</a>
+                            <a class="btn btn-danger btn-small" href="{% url 'departamento_delete' departamento.pk %}">Excluir</a>
+                        </div>
+                    {% endif %}
                 </div>
             {% endfor %}
         </div>

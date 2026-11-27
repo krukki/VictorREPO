@@ -642,3 +642,29 @@ a.evento:hover {
     margin-top: 12px;
     font-size: 12px;
 }
+
+/* ---------- Criar conta e modo visitante ---------- */
+
+/* Links e o botão de visitante embaixo do formulário de entrar */
+.alternativas {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--caixa-borda);
+    text-align: center;
+}
+
+.alternativas p {
+    margin: 0;
+}
+
+.alternativas .ajuda {
+    margin-top: 0;
+}
+
+.aviso-visitante {
+    margin-bottom: 18px;
+}

@@ -1442,3 +1442,129 @@ class TelasNovasTests(TestCase):
                     reverse('tarefa_rapida'), reverse('tarefa_list') + '?ordenar=prioridade&status=em_andamento'):
             with self.subTest(url=url):
                 self.assertEqual(self.client.get(url).status_code, 200)
+
+
+# Criar conta e modo visitante (sem modelos novos: User do Django e uma marca na sessão)
+
+class CadastroTests(TestCase):
+    url = reverse_lazy('cadastro')
+
+    def test_cria_conta_e_ja_entra(self):
+        response = self.client.post(self.url, {
+            'username': 'professor', 'password1': 'senha-bem-forte-42', 'password2': 'senha-bem-forte-42',
+        }, follow=True)
+
+        self.assertRedirects(response, reverse('tarefa_list'))
+        self.assertContains(response, 'Conta criada. Boas-vindas, professor!')
+        self.assertTrue(User.objects.filter(username='professor').exists())
+        self.assertEqual(int(self.client.session['_auth_user_id']), User.objects.get(username='professor').pk)
+
+    def test_conta_nova_nao_e_administradora(self):
+        self.client.post(self.url, {
+            'username': 'professor', 'password1': 'senha-bem-forte-42', 'password2': 'senha-bem-forte-42',
+        })
+        usuario = User.objects.get(username='professor')
+        self.assertFalse(usuario.is_staff or usuario.is_superuser)
+
+    def test_senhas_diferentes(self):
+        response = self.client.post(self.url, {
+            'username': 'professor', 'password1': 'senha-bem-forte-42', 'password2': 'outra-senha-forte-42',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.exists())
+
+    def test_usuario_repetido(self):
+        User.objects.create_user('professor', password='x')
+        response = self.client.post(self.url, {
+            'username': 'Professor', 'password1': 'senha-bem-forte-42', 'password2': 'senha-bem-forte-42',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(User.objects.count(), 1)
+
+    def test_quem_ja_entrou_vai_para_o_painel(self):
+        self.client.force_login(User.objects.create_user('ana'))
+        self.assertRedirects(self.client.get(self.url), reverse('painel'))
+
+    def test_login_tem_os_links(self):
+        response = self.client.get(reverse('login'))
+        self.assertContains(response, reverse('cadastro'))
+        self.assertContains(response, 'Entrar como visitante')
+
+
+class VisitanteTests(TestCase):
+    fixtures = ['exemplos']
+
+    def setUp(self):
+        response = self.client.post(reverse('visitante'))
+        self.assertRedirects(response, reverse('painel'))
+
+    def test_entrar_exige_post(self):
+        self.client.logout()
+        self.assertEqual(self.client.get(reverse('visitante')).status_code, 405)
+
+    def test_ve_as_telas_de_consulta(self):
+        tarefa = Tarefa.objects.first()
+        urls = [
+            reverse('painel'), reverse('tarefa_list'), reverse('tarefa_detail', args=[tarefa.pk]),
+            reverse('quadro'), reverse('calendario'), reverse('responsavel_list'),
+            reverse('responsavel_detail', args=[Responsavel.objects.first().pk]),
+            reverse('projeto_list'), reverse('projeto_detail', args=[Projeto.objects.first().pk]),
+            reverse('departamento_list'), reverse('categoria_list'), reverse('etiqueta_list'),
+        ]
+        for url in urls:
+            with self.subTest(url=url):
+                self.assertEqual(self.client.get(url).status_code, 200)
+
+    def test_nao_abre_telas_de_alterar(self):
+        tarefa = Tarefa.objects.first()
+        for url in [reverse('tarefa_create'), reverse('tarefa_update', args=[tarefa.pk]),
+                    reverse('tarefa_delete', args=[tarefa.pk]), reverse('categoria_create'),
+                    reverse('tarefa_rapida'), reverse('admin:index')]:
+            with self.subTest(url=url):
+                self.assertEqual(self.client.get(url).status_code, 302)
+
+    def test_nao_altera_nada(self):
+        tarefa = Tarefa.objects.filter(concluida_em__isnull=True).first()
+        tentativas = [
+            (reverse('tarefa_toggle', args=[tarefa.pk]), {}),
+            (reverse('tarefa_mover', args=[tarefa.pk]), {'situacao': 'concluida'}),
+            (reverse('tarefa_detail', args=[tarefa.pk]), {'acao': 'comentario', 'texto': 'oi'}),
+            (reverse('tarefa_rapida'), {'texto': 'Nova @ana'}),
+            (reverse('tarefa_create'), {'titulo': 'X', 'prazo': '2030-01-01T10:00',
+                                        'pessoa_responsavel': tarefa.pessoa_responsavel_id}),
+        ]
+        antes = (Tarefa.objects.count(), Comentario.objects.count(), Atividade.objects.count())
+        for url, dados in tentativas:
+            with self.subTest(url=url):
+                response = self.client.post(url, dados)
+                self.assertEqual(response.status_code, 302)
+                self.assertTrue(response.url.startswith(reverse('login')))
+        tarefa.refresh_from_db()
+        self.assertIsNone(tarefa.concluida_em)
+        self.assertEqual((Tarefa.objects.count(), Comentario.objects.count(), Atividade.objects.count()), antes)
+
+    def test_tela_mostra_o_modo_visitante_sem_botoes_de_alterar(self):
+        response = self.client.get(reverse('tarefa_list'))
+        self.assertContains(response, 'modo visitante')
+        self.assertContains(response, 'Visitante')
+        self.assertNotContains(response, reverse('tarefa_create'))
+        self.assertNotContains(response, 'Concluir')
+        response = self.client.get(reverse('quadro'))
+        self.assertNotContains(response, 'draggable="true"')
+        self.assertNotContains(response, 'class="quadro" data-quadro')
+
+    def test_login_explica_por_que_pediu_para_entrar(self):
+        response = self.client.get(reverse('tarefa_create'), follow=True)
+        self.assertContains(response, 'Para fazer alterações, entre com uma conta ou crie uma.')
+
+    def test_sair_encerra_o_modo_visitante(self):
+        self.client.post(reverse('logout'))
+        response = self.client.get(reverse('painel'))
+        self.assertRedirects(response, f"{reverse('login')}?next={reverse('painel')}")
+
+    def test_entrar_com_conta_vale_mais_que_o_visitante(self):
+        User.objects.create_user('ana', password='senha-forte-123')
+        self.client.post(reverse('login'), {'username': 'ana', 'password': 'senha-forte-123'})
+        response = self.client.get(reverse('tarefa_list'))
+        self.assertNotContains(response, 'modo visitante')
+        self.assertContains(response, reverse('tarefa_create'))

@@ -6,15 +6,17 @@
     <div class="cabecalho">
         <div>
             <h1>Quadro</h1>
-            <p class="item-detalhe">Arraste os cartões entre as colunas, ou use as setas de cada cartão.</p>
+            {% if pode_editar %}<p class="item-detalhe">Arraste os cartões entre as colunas, ou use as setas de cada cartão.</p>{% endif %}
         </div>
         <div class="acoes">
             <a class="btn" href="{% url 'tarefa_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
                 <svg aria-hidden="true"><use href="#i-tarefas"></use></svg>Ver em lista
             </a>
-            <a class="btn btn-primary" href="{% url 'tarefa_create' %}">
-                + Nova tarefa
-            </a>
+            {% if pode_editar %}
+                <a class="btn btn-primary" href="{% url 'tarefa_create' %}">
+                    + Nova tarefa
+                </a>
+            {% endif %}
         </div>
     </div>
 
@@ -42,7 +44,7 @@
         </form>
     </details>
 
-    <div class="quadro" data-quadro>
+    <div class="quadro"{% if pode_editar %} data-quadro{% endif %}>
         {% csrf_token %}
         {% for coluna in colunas %}
             <section class="coluna coluna-{{ coluna.situacao }}" data-coluna="{{ coluna.situacao }}"
@@ -54,7 +56,7 @@
                 </div>
                 <div class="coluna-cartoes" data-cartoes>
                     {% for tarefa in coluna.tarefas %}
-                        <article class="cartao item-tarefa{% if tarefa.concluida_em %} item-concluida{% elif tarefa.prazo < now %} item-atrasada{% endif %}" draggable="true"
+                        <article class="cartao item-tarefa{% if tarefa.concluida_em %} item-concluida{% elif tarefa.prazo < now %} item-atrasada{% endif %}"{% if pode_editar %} draggable="true"{% endif %}
                                  data-cartao data-url="{% url 'tarefa_mover' tarefa.pk %}">
                             <div class="cartao-titulo"><a href="{% url 'tarefa_detail' tarefa.pk %}" draggable="false">{{ tarefa.titulo }}</a></div>
                             <div class="cartao-detalhe">
@@ -75,25 +77,27 @@
                                         <span class="badge cor-{{ tarefa.categoria.cor }}">{{ tarefa.categoria.nome }}</span>
                                     {% endif %}
                                 </div>
-                                {# Sem JavaScript, as setas mandam o formulário normalmente #}
-                                <form method="post" action="{% url 'tarefa_mover' tarefa.pk %}" class="cartao-mover">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                    <button type="submit" name="situacao" value="{{ coluna.anterior }}" class="btn btn-small btn-icone"
-                                            data-mover="anterior" title="Mover para a coluna anterior"{% if not coluna.anterior %} hidden{% endif %}>
-                                        <svg aria-hidden="true"><use href="#i-seta-esq"></use></svg>
-                                        <span class="visualmente-oculto">Mover para a coluna anterior</span>
-                                    </button>
-                                    <button type="submit" name="situacao" value="{{ coluna.proxima }}" class="btn btn-small btn-icone"
-                                            data-mover="proxima" title="Mover para a próxima coluna"{% if not coluna.proxima %} hidden{% endif %}>
-                                        <svg aria-hidden="true"><use href="#i-seta-dir"></use></svg>
-                                        <span class="visualmente-oculto">Mover para a próxima coluna</span>
-                                    </button>
-                                </form>
+                                {% if pode_editar %}
+                                    {# Sem JavaScript, as setas mandam o formulário normalmente #}
+                                    <form method="post" action="{% url 'tarefa_mover' tarefa.pk %}" class="cartao-mover">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                        <button type="submit" name="situacao" value="{{ coluna.anterior }}" class="btn btn-small btn-icone"
+                                                data-mover="anterior" title="Mover para a coluna anterior"{% if not coluna.anterior %} hidden{% endif %}>
+                                            <svg aria-hidden="true"><use href="#i-seta-esq"></use></svg>
+                                            <span class="visualmente-oculto">Mover para a coluna anterior</span>
+                                        </button>
+                                        <button type="submit" name="situacao" value="{{ coluna.proxima }}" class="btn btn-small btn-icone"
+                                                data-mover="proxima" title="Mover para a próxima coluna"{% if not coluna.proxima %} hidden{% endif %}>
+                                            <svg aria-hidden="true"><use href="#i-seta-dir"></use></svg>
+                                            <span class="visualmente-oculto">Mover para a próxima coluna</span>
+                                        </button>
+                                    </form>
+                                {% endif %}
                             </div>
                         </article>
                     {% endfor %}
-                    <p class="coluna-vazia">Nenhuma tarefa aqui.<br>Arraste um cartão para esta coluna.</p>
+                    <p class="coluna-vazia">Nenhuma tarefa aqui.{% if pode_editar %}<br>Arraste um cartão para esta coluna.{% endif %}</p>
                 </div>
                 {% if coluna.situacao == 'concluida' %}
                     <div class="coluna-rodape item-detalhe">

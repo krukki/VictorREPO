@@ -2,8 +2,15 @@
 
 Gerenciador de tarefas em Django. Cada tarefa tem responsável, prazo, projeto, categoria e
 etiquetas, e na página dela ficam o checklist, os comentários, os anexos e as horas
-trabalhadas. São dez modelos: `Departamento`, `Responsavel`, `Projeto`, `Categoria`,
-`Etiqueta`, `Tarefa`, `Subtarefa`, `Comentario`, `Anexo` e `RegistroTempo`.
+trabalhadas. São onze modelos: `Departamento`, `Responsavel`, `Projeto`, `Categoria`,
+`Etiqueta`, `Tarefa`, `Subtarefa`, `Comentario`, `Anexo`, `RegistroTempo` e `Atividade`.
+
+Além da lista, as tarefas aparecem num **quadro** (arraste entre A fazer, Em andamento e
+Concluída) e num **calendário** mensal. Cada tarefa tem prioridade e um histórico do que
+aconteceu com ela. O visual tem tema claro e escuro, e a tecla **N** abre a adição rápida:
+escreva `Revisar o relatório amanhã 14h @ana #mensal !alta` e a tarefa sai pronta.
+Atalhos: `N` nova tarefa, `/` busca, `G` + `P`/`T`/`Q`/`C` para Painel, Tarefas, Quadro e
+Calendário, `?` lista os atalhos. Detalhes na seção 9 do [GUIA.md](GUIA.md).
 
 Este arquivo explica **como rodar**. Para entender **como o código funciona por dentro**,
 veja o [GUIA.md](GUIA.md). Para **publicar na internet** de graça, veja o
@@ -89,6 +96,12 @@ schtasks /Create /SC HOURLY /TN "Suap2 lembretes" /TR "py -3.14 C:\caminho\para\
 ```
 
 No Linux, use o cron: `0 * * * * cd /caminho/Suap2 && python manage.py enviar_lembretes`.
+
+## Atualizando um banco antigo
+
+Depois de puxar esta versão, rode `python manage.py migrate`: a migração `0006` cria a
+prioridade (todas as tarefas existentes ficam como Média), a data de início e o histórico.
+Nada do que já estava no banco é apagado.
 
 ## Atenção: migrações foram unificadas
 

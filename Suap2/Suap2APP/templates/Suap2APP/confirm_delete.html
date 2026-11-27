@@ -2,22 +2,18 @@
 
 {% block title %}{{ titulo_pagina }} — Suap2{% endblock %}
 
-{% block classe_conteudo %}conteudo-estreito{% endblock %}
-
 {% block content %}
-    <div class="caixa">
-        <h1>{{ titulo_pagina }}</h1>
+    <h1>{{ titulo_pagina }}</h1>
 
-        <p>Tem certeza que deseja excluir <strong>{{ object }}</strong>? Essa ação não pode ser desfeita.</p>
+    <p>Tem certeza que deseja excluir <strong>{{ object }}</strong>? Essa ação não pode ser desfeita.</p>
 
-        {% if aviso %}
-            <p class="aviso">{{ aviso }}</p>
-        {% endif %}
+    {% if aviso %}
+        <p class="aviso">{{ aviso }}</p>
+    {% endif %}
 
-        <form method="post" class="botoes">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-danger">Excluir</button>
-            <a class="btn btn-secondary" href="{{ cancelar_url }}">Cancelar</a>
-        </form>
-    </div>
+    <form method="post" class="botoes">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Excluir</button>
+        <a class="btn btn-secondary" href="{{ cancelar_url }}">Cancelar</a>
+    </form>
 {% endblock %}

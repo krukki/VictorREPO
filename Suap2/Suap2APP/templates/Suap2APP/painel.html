@@ -6,22 +6,18 @@
     <div class="cabecalho">
         <div>
             <h1>Painel</h1>
-            <p class="item-detalhe subtitulo painel-semana">
+            <p class="item-detalhe painel-semana">
                 Próximos 7 dias: {{ vencem_na_semana }} tarefa{{ vencem_na_semana|pluralize }} vence{{ vencem_na_semana|pluralize:"m" }}
                 · Últimos 7 dias: {{ concluidas_na_semana }} concluída{{ concluidas_na_semana|pluralize }}
             </p>
         </div>
         <div class="acoes">
-            <a class="btn btn-secondary" href="{% url 'quadro' %}">
-                <svg class="icone" aria-hidden="true"><use href="#i-quadro"></use></svg>Quadro
-            </a>
-            <a class="btn btn-primary" href="{% url 'tarefa_create' %}">
-                <svg class="icone" aria-hidden="true"><use href="#i-mais"></use></svg>Nova tarefa
-            </a>
+            <a class="btn" href="{% url 'quadro' %}"><svg aria-hidden="true"><use href="#i-quadro"></use></svg>Quadro</a>
+            <a class="btn btn-primary" href="{% url 'tarefa_create' %}">+ Nova tarefa</a>
         </div>
     </div>
 
-    <div class="contadores">
+    <nav class="contadores" aria-label="Resumo das tarefas">
         <a class="contador" href="{% url 'tarefa_list' %}?status=pendentes">
             <strong>{{ pendentes }}</strong> pendente{{ pendentes|pluralize }}
         </a>
@@ -34,11 +30,11 @@
         <a class="contador" href="{% url 'tarefa_list' %}?status=concluidas">
             <strong>{{ concluidas }}</strong> concluída{{ concluidas|pluralize }}
         </a>
-    </div>
+    </nav>
 
     <div class="layout-painel">
-        <section class="secao">
-            <h2 class="titulo-secao"><svg class="icone" aria-hidden="true"><use href="#i-relogio"></use></svg>Próximos prazos</h2>
+        <section>
+            <h2>Próximos prazos</h2>
             {% if proximas %}
                 <div class="lista">
                     {% for tarefa in proximas %}
@@ -51,10 +47,10 @@
         </section>
 
         <div>
-            <section class="secao">
-                <h2 class="titulo-secao"><svg class="icone" aria-hidden="true"><use href="#i-projetos"></use></svg>Pendências por projeto</h2>
+            <section>
+                <h2>Pendências por projeto</h2>
                 {% if projetos %}
-                    <div class="lista-compacta">
+                    <div class="lista">
                         {% for projeto in projetos %}
                             <div class="item">
                                 <a class="item-titulo" href="{% url 'projeto_detail' projeto.pk %}">{{ projeto.nome }}</a>
@@ -72,8 +68,8 @@
                 {% endif %}
             </section>
 
-            <section class="secao">
-                <h2 class="titulo-secao"><svg class="icone" aria-hidden="true"><use href="#i-cadastros"></use></svg>Pendências por categoria</h2>
+            <section>
+                <h2>Pendências por categoria</h2>
                 {% if categorias %}
                     <div class="marcadores">
                         {% for categoria in categorias %}
@@ -87,10 +83,10 @@
                 {% endif %}
             </section>
 
-            <section class="secao">
-                <h2 class="titulo-secao"><svg class="icone" aria-hidden="true"><use href="#i-pessoas"></use></svg>Pendências por responsável</h2>
+            <section>
+                <h2>Pendências por responsável</h2>
                 {% if responsaveis %}
-                    <div class="lista-compacta">
+                    <div class="lista">
                         {% for responsavel in responsaveis %}
                             <div class="item">
                                 <a class="item-titulo" href="{% url 'responsavel_detail' responsavel.pk %}">{{ responsavel.nome }}</a>

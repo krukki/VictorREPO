@@ -1,0 +1,28 @@
+{% comment %}
+A barra preta do menu e a faixa clara dos cadastros, no alto da janela.
+`secao` é o nome da URL atual; o começo dele diz em qual seção a pessoa está
+(tarefa_list, tarefa_detail… são todas "Tarefas"), para marcar o link.
+{% endcomment %}
+{% with secao=request.resolver_match.url_name|default:'' %}
+<nav class="menu" aria-label="Principal">
+    <a class="menu-link" href="{% url 'painel' %}"{% if secao == 'painel' %} aria-current="page"{% endif %}>Painel</a>
+    <a class="menu-link" href="{% url 'tarefa_list' %}"{% if secao|slice:':7' == 'tarefa_' %} aria-current="page"{% endif %}>Tarefas</a>
+    <a class="menu-link" href="{% url 'quadro' %}"{% if secao == 'quadro' %} aria-current="page"{% endif %}>Quadro</a>
+    <a class="menu-link" href="{% url 'calendario' %}"{% if secao == 'calendario' %} aria-current="page"{% endif %}>Calendário</a>
+    <a class="menu-link" href="{% url 'projeto_list' %}"{% if secao|slice:':8' == 'projeto_' %} aria-current="page"{% endif %}>Projetos</a>
+    <a class="menu-link" href="{% url 'responsavel_list' %}"{% if secao|slice:':12' == 'responsavel_' %} aria-current="page"{% endif %}>Responsáveis</a>
+</nav>
+
+<nav class="submenu" aria-label="Cadastros">
+    <span class="nav-rotulo">Cadastros:</span>
+    <a href="{% url 'departamento_list' %}"{% if secao|slice:':13' == 'departamento_' %} aria-current="page"{% endif %}>
+        <svg aria-hidden="true"><use href="#i-predio"></use></svg>Departamentos
+    </a>
+    <a href="{% url 'categoria_list' %}"{% if secao|slice:':10' == 'categoria_' %} aria-current="page"{% endif %}>
+        <svg aria-hidden="true"><use href="#i-folha"></use></svg>Categorias
+    </a>
+    <a href="{% url 'etiqueta_list' %}"{% if secao|slice:':9' == 'etiqueta_' %} aria-current="page"{% endif %}>
+        <svg aria-hidden="true"><use href="#i-etiqueta"></use></svg>Etiquetas
+    </a>
+</nav>
+{% endwith %}

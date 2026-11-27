@@ -2,12 +2,10 @@
 
 {% block title %}{{ titulo_pagina }} — Suap2{% endblock %}
 
-{% block classe_conteudo %}conteudo-estreito{% endblock %}
-
 {% block content %}
     <h1>{{ titulo_pagina }}</h1>
 
-    <form method="post" class="formulario caixa">
+    <form method="post" class="formulario">
         {% csrf_token %}
 
         {% if sem_responsaveis %}

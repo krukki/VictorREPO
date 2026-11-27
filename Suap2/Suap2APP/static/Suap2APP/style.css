@@ -849,9 +849,42 @@ kbd {
 }
 
 .erro {
+    margin: 4px 0 0;
     color: var(--perigo);
     font-size: 13px;
-    margin-top: 4px;
+}
+
+.erro-geral {
+    margin: 0;
+    padding: 10px 14px;
+    border-radius: var(--raio-p);
+    background: var(--perigo-fundo);
+    font-weight: 600;
+}
+
+/* _campo.html: grupos de opções vêm num <fieldset> com <legend> no lugar do <label> */
+.grupo-opcoes {
+    margin: 0;
+    padding: 0;
+    border: none;
+    min-width: 0;
+}
+
+.grupo-opcoes legend {
+    margin-bottom: 5px;
+    padding: 0;
+    font-weight: 700;
+    font-size: 13.5px;
+}
+
+.rotulo-checkbox {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 8px;
+}
+
+small.ajuda {
+    display: block;
 }
 
 .aviso {
@@ -949,6 +982,11 @@ kbd {
 
 .filtros-recolhivel > summary::-webkit-details-marker {
     display: none;
+}
+
+.paginacao [aria-disabled="true"] {
+    opacity: 0.45;
+    cursor: default;
 }
 
 .paginacao {
@@ -1829,4 +1867,27 @@ h1.concluida {
         min-width: 0;
         font-size: 20px;
     }
+}
+
+/* Páginas de erro (404 e 500) */
+
+.pagina-erro {
+    max-width: 520px;
+    margin: 56px auto 0;
+    text-align: center;
+}
+
+.pagina-erro-numero {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--link);
+    font-family: var(--fonte-titulo);
+    font-size: 64px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.pagina-erro .botoes {
+    justify-content: center;
+    margin-top: 20px;
 }

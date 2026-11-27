@@ -1,0 +1,30 @@
+{% load static %}<!DOCTYPE html>
+{% comment %}
+Não herda de base.html de propósito: o Django renderiza esta página sem contexto
+(sem usuário, sem mensagens), justamente quando algo deu errado. Só usa o que não pode falhar.
+{% endcomment %}
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Erro no servidor — Suap2</title>
+    <link rel="stylesheet" href="{% static 'Suap2APP/style.css' %}">
+</head>
+<body>
+    <header class="topo">
+        <div class="topo-conteudo">
+            <a class="marca" href="/">Suap2</a>
+        </div>
+    </header>
+    <main class="conteudo">
+        <div class="caixa pagina-erro">
+            <span class="pagina-erro-numero" aria-hidden="true">500</span>
+            <h1>Algo deu errado</h1>
+            <p class="item-detalhe">O servidor teve um problema ao abrir esta página. Tente de novo em instantes.</p>
+            <div class="botoes">
+                <a class="btn btn-primary" href="/">Voltar ao início</a>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

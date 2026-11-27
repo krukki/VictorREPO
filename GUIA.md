@@ -537,6 +537,10 @@ isso é o servidor web; o Django nem registra a rota.
 - `_icones.html` — os ícones SVG, desenhados uma vez só e usados com
   `<svg class="icone"><use href="#i-nome"></use></svg>`.
 - `_prioridade.html` — a bandeirinha colorida da prioridade.
+- `_campo.html` — um campo de formulário completo: rótulo, widget, ajuda e erros. Grupos
+  de caixas de seleção viram `<fieldset>` com `<legend>`. `form.html` e `_form_item.html`
+  usam este parcial em vez de repetir o HTML.
+- `_paginacao.html` — os botões de página de uma `ListView`.
 - `_tarefa_item.html` — um card de tarefa. O underline no nome indica que é um *parcial*,
   incluído por outros templates. Aparece em quatro telas, e as flags do `{% include %}`
   dizem o que esconder: `mostrar_responsavel=True` na lista e no painel,
@@ -550,7 +554,11 @@ isso é o servidor web; o Django nem registra a rota.
 - `form.html` — serve para criar **e** editar, nos seis cadastros.
 - `confirm_delete.html` — a tela de excluir dos quatro cadastros auxiliares, usada pelo
   `ExclusaoMixin`. `Tarefa` e `Responsavel` têm as suas próprias.
-- Na paginação (`tarefa_list.html:42`), a tag `{% querystring page=... %}` reaproveita os
+- `404.html` e `500.html` ficam em `templates/`, fora da pasta `Suap2APP/`, porque é ali
+  que o Django procura as páginas de erro. Elas só aparecem com `DEBUG=0`; com `DEBUG=1` o
+  Django mostra a página técnica de erro. O `500.html` não herda de `base.html` de
+  propósito: quando ele aparece, algo já quebrou, e ele é renderizado sem contexto.
+- Na paginação (`_paginacao.html`), a tag `{% querystring page=... %}` reaproveita os
   parâmetros da URL atual e só troca a página — é o que impede os filtros de sumirem ao
   clicar em "Próxima".
 
@@ -601,7 +609,7 @@ terminal. Para enviar de verdade, veja a tabela de variáveis no README.
 | Novo filtro na lista | `TarefaFiltroForm`: cria o campo **e** o `if` correspondente em `filtrar()`. A barra de filtros se desenha sozinha |
 | Novo cadastro auxiliar (como Categoria) | modelo → migração → form → `FormularioMixin` + `ExclusaoMixin` em `views.py` → 4 rotas → um `_list.html` → link em `base.html` → `admin.py` |
 | Novo tipo de item dentro da tarefa | modelo com FK CASCADE → form sem o campo `tarefa` → uma linha em `TarefaDetailView.FORMULARIOS` e outra em `TIPOS_DE_ITEM` → um bloco em `tarefa_detail.html` |
-| Nova cor de categoria | `Categoria.CORES` **e** a classe `.cor-<nome>` no `style.css` |
+| Nova cor de categoria | `Categoria.CORES` **e** a classe `.cor-<nome>` no `style.css` (mais as variáveis `--cat-<nome>-*` dos dois temas) |
 | Mudar o limite de tamanho do anexo | `TAMANHO_MAXIMO_ANEXO` em `forms.py` |
 | Mudar onde os anexos são guardados | `MEDIA_ROOT` em `settings.py`, ou o `upload_to` do `Anexo` |
 | Mudar a ordem da lista | `Meta.ordering` em `models.py` |
@@ -612,6 +620,7 @@ terminal. Para enviar de verdade, veja a tabela de variáveis no README.
 | Mudar quantos dias de concluídas o quadro mostra | `DIAS_DE_CONCLUIDAS` em `QuadroView` |
 | Ensinar uma palavra nova à adição rápida | o laço de `TarefaRapidaForm.clean` em `forms.py` |
 | Novo atalho de teclado | o `keydown` em `app.js` **e** a lista em `base.html` (janela de atalhos) |
+| Novo ícone | um `<symbol id="i-nome">` em `_icones.html` |
 | Mudar o menu | `templates/Suap2APP/base.html` |
 | Nova página | view em `views.py` → rota em `Suap2/Suap2/urls.py` → template |
 | Mudar colunas/filtros do `/admin` | `admin.py` |

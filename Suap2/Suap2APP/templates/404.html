@@ -1,0 +1,15 @@
+{% extends 'Suap2APP/base.html' %}
+
+{% block title %}Página não encontrada — Suap2{% endblock %}
+
+{% block content %}
+    <div class="caixa pagina-erro">
+        <span class="pagina-erro-numero" aria-hidden="true">404</span>
+        <h1>Página não encontrada</h1>
+        <p class="item-detalhe">O endereço pode ter mudado, ou o item foi excluído.</p>
+        <div class="botoes">
+            <a class="btn btn-primary" href="{% url 'painel' %}">Ir para o painel</a>
+            <a class="btn btn-secondary" href="{% url 'tarefa_list' %}">Ver tarefas</a>
+        </div>
+    </div>
+{% endblock %}

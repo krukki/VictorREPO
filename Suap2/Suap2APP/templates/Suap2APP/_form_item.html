@@ -8,17 +8,11 @@ Formulário de adicionar um item na tela da tarefa. Quem inclui define:
     <input type="hidden" name="acao" value="{{ acao }}">
 
     {% for error in form.non_field_errors %}
-        <div class="erro">{{ error }}</div>
+        <p class="erro erro-geral" role="alert">{{ error }}</p>
     {% endfor %}
 
     {% for field in form %}
-        <div class="campo-item">
-            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-            {{ field }}
-            {% for error in field.errors %}
-                <div class="erro">{{ error }}</div>
-            {% endfor %}
-        </div>
+        {% include 'Suap2APP/_campo.html' with classe='campo-item' %}
     {% endfor %}
 
     <button type="submit" class="btn btn-secondary btn-small">{{ rotulo }}</button>

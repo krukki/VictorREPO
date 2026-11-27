@@ -357,6 +357,11 @@ class ResponsavelDetailTests(BaseTestCase):
         response = self.client.get(reverse('responsavel_detail', args=[999]))
         self.assertEqual(response.status_code, 404)
 
+    def test_pagina_404_personalizada(self):
+        response = self.client.get(reverse('responsavel_detail', args=[999]))
+        self.assertTemplateUsed(response, '404.html')
+        self.assertContains(response, 'Página não encontrada', status_code=404)
+
 
 class EnviarLembretesTests(TestCase):
     @classmethod
